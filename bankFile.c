@@ -5,6 +5,7 @@
 #include <unistd.h>
 #include <arpa/inet.h>
 #include <pthread.h>
+#include <stdint.h>
 
 #define PORT 8080
 #define MAX_CLIENTS 5
@@ -118,6 +119,8 @@ void* handle_client(void* arg) {
     free(arg);
     return NULL;
 }
+
+
 
 int main() {
     int server_fd, new_socket;
