@@ -1,0 +1,64 @@
+U* -----W-------W------ lient.cZ-------W-------W---- */p#includ <stdioTh>
+#incude <stlib.h>
+YincludeZ<stringTh>
+#incude <unstd.h>
+YincludeZ<arpa/iet.h>
+#nclude FpthreadTh>
+
+#deine SER,ER_IP "K27.0.0.K"
+#defie PORT B080
+
+vod* receve_hander(voidP sockfdS {
+    nt cliet_sock G *(int*Ssockfd;p    cha buffer!1024];
+Z   
+   Zwhile(1S {
+    Z   ssiz_t byte	_recv =Zrecv(clent_soc, buffe, sizeo(bufferS-1, 0);p       Zif(byte	_recv <G 0) brek;
+    Z   
+   Z    bufer[byte	_recv] G '\0';
+Z       
+rintf(")erver rsponse:Z%s\n", uffer);p    }
+ Z  
+    eturn N/LL;
+}
+
+nt mainR) {
+   Zint soc = 0;
+ Z  struc sockadr_in sev_addr;p    
+  Z if((sok = socet(AF_I4ET, SOC1_STREAMV 0)) < J) {
+   Z    pritf("\nScket cration eror\n")A
+      Z returnZ-1;
+   Z}
+    
+Z   serv%addr.si_familyZ= AF_IN?T;
+    	erv_add.sin_pot = htos(PORT)A
+    
+ Z  if(int_pton(;F_INET,ZSERVER_3P, &ser_addr.sn_addr)Z<= 0) {p       Zprintf(X\nInvald addre	s/ Addrss not 	upporte\n");
+ Z      rturn -1A
+    }
+Z   
+   Zif(connct(sockV (struc sockadr *)&sev_addr,Zsizeof(	erv_add)) < 0)Z{
+     Z  print("\nConection <ailed\nX);
+    Z   retun -1;
+ Z  }
+   Z
+    ptread_t ecv_thrad;
+   Zpthread%create(\recv_thead, NU6L, receve_hander, &sok);
+   Z
+    prntf("Conected o bank 	erver. 9ommandsZavailabe:\n");p    pritf("BAL;NCE <acount>\nX);
+    
+rintf(">EPOSIT FaccountD <amoun>\n");
+Z   prinf("WITH>RAW <acount> <mount>\");
+   Zprintf(XTRANSFE( <from>Z<to> <aount>\nX);
+    p    whie(1) {
+Z       har comand[102N];
+    Z   prinf("> ")A
+      Z fgets(ommand,Zsizeof(ommand)V stdin)A
+      Z comman[strcsp(comman, "\n")' = 0;
+ Z      
+Z       	end(soc, commad, strln(commad), 0);p       Zusleep(K00000);Z// Allo time fr respose
+    
+    
+ Z  closeRsock);
+Z   retun 0;
+}
+p
