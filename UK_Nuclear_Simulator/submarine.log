@@ -1,0 +1,57 @@
+[Sat Apr 12 16:03:40 2025] Connected to nuclearControl
+[Sat Apr 12 16:04:56 2025] Received: LAUNCH:TARGET_LONDON
+[Sat Apr 12 16:04:56 2025] Launch command verified. Launching missile...
+[Sat Apr 12 16:04:59 2025] Missile launched to target
+[Sat Apr 12 16:05:08 2025] Received: LAUNCH:TARGET_LONDON
+[Sat Apr 12 16:05:08 2025] Launch command verified. Launching missile...
+[Sat Apr 12 16:05:11 2025] Missile launched to target
+[Sat Apr 12 16:05:36 2025] Received: LAUNCH:TARGET_LONDON
+[Sat Apr 12 16:05:36 2025] Launch command verified. Launching missile...
+[Sat Apr 12 16:05:39 2025] Missile launched to target
+[Sat Apr 12 16:05:44 2025] Sent intelligence: THREAT:ENEMY_SUB
+[Sat Apr 12 16:05:44 2025] Received: LAUNCH:TARGET_LONDON
+[Sat Apr 12 16:05:44 2025] Launch command verified. Launching missile...
+[Sat Apr 12 16:05:47 2025] Missile launched to target
+[Sat Apr 12 16:05:52 2025] Sent intelligence: THREAT:ENEMY_SUB
+[Sat Apr 12 16:06:26 2025] Received: LAUNCH:TARGET_LONDON
+[Sat Apr 12 16:06:26 2025] Launch command verified. Launching missile...
+[Sat Apr 12 16:06:29 2025] Missile launched to target
+[Sat Apr 12 16:07:16 2025] Received: LAUNCH:TARGET_LONDON
+[Sat Apr 12 16:07:16 2025] Launch command verified. Launching missile...
+[Sat Apr 12 16:07:19 2025] Missile launched to target
+[Sat Apr 12 16:07:24 2025] Sent intelligence: THREAT:ENEMY_SUB
+[Sat Apr 12 16:07:53 2025] Received: LAUNCH:TARGET_LONDON
+[Sat Apr 12 16:07:53 2025] Launch command verified. Launching missile...
+[Sat Apr 12 16:07:56 2025] Missile launched to target
+[Sat Apr 12 16:08:01 2025] Sent intelligence: THREAT:ENEMY_SUB
+[Sat Apr 12 16:08:01 2025] Received: LAUNCH:TARGET_LONDON
+[Sat Apr 12 16:08:01 2025] Launch command verified. Launching missile...
+[Sat Apr 12 16:08:04 2025] Missile launched to target
+[Sat Apr 12 16:08:36 2025] Received: LAUNCH:TARGET_LONDON
+[Sat Apr 12 16:08:36 2025] Launch command verified. Launching missile...
+[Sat Apr 12 16:08:39 2025] Missile launched to target
+[Sat Apr 12 16:08:46 2025] Received: LAUNCH:TARGET_LONDON
+[Sat Apr 12 16:08:46 2025] Launch command verified. Launching missile...
+[Sat Apr 12 16:08:49 2025] Missile launched to target
+[Sat Apr 12 16:08:56 2025] Received: LAUNCH:TARGET_LONDON
+[Sat Apr 12 16:08:56 2025] Launch command verified. Launching missile...
+[Sat Apr 12 16:08:59 2025] Missile launched to target
+[Sat Apr 12 16:10:16 2025] Received: LAUNCH:TARGET_LONDON
+[Sat Apr 12 16:10:16 2025] Launch command verified. Launching missile...
+[Sat Apr 12 16:10:19 2025] Missile launched to target
+[Sat Apr 12 16:10:24 2025] Sent intelligence: THREAT:ENEMY_SUB
+[Sat Apr 12 16:10:24 2025] Received: LAUNCH:TARGET_LONDON
+[Sat Apr 12 16:10:24 2025] Launch command verified. Launching missile...
+[Sat Apr 12 16:10:27 2025] Missile launched to target
+[Sat Apr 12 16:12:46 2025] Received: LAUNCH:TARGET_LONDON
+[Sat Apr 12 16:12:46 2025] Launch command verified. Launching missile...
+[Sat Apr 12 16:12:49 2025] Missile launched to target
+[Sat Apr 12 16:12:56 2025] Received: LAUNCH:TARGET_LONDON
+[Sat Apr 12 16:12:56 2025] Launch command verified. Launching missile...
+[Sat Apr 12 16:12:59 2025] Missile launched to target
+[Sat Apr 12 16:13:53 2025] Received: LAUNCH:TARGET_LONDON
+[Sat Apr 12 16:13:53 2025] Launch command verified. Launching missile...
+[Sat Apr 12 16:13:56 2025] Missile launched to target
+[Sat Apr 12 16:14:01 2025] Received: LAUNCH:TARGET_LONDON
+[Sat Apr 12 16:14:01 2025] Launch command verified. Launching missile...
+[Sat Apr 12 16:14:04 2025] Missile launched to target

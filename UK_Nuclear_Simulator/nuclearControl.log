@@ -1,0 +1,98 @@
+[Sat Apr 12 16:02:38 2025] Server started
+[Sat Apr 12 16:02:43 2025] Test mode: Simulating THREAT:ENEMY_MISSILE:52.5200,13.4050
+[Sat Apr 12 16:03:07 2025] silo
+[Sat Apr 12 16:03:40 2025] submarine
+[Sat Apr 12 16:03:46 2025] radarTHREAT:ENEMY_AIRCRAFT:51.5074,-0.1278
+[Sat Apr 12 16:03:53 2025] satelite
+[Sat Apr 12 16:04:56 2025] Received: THREAT:ENEMY_AIRCRAFT:51.5074,-0.1278
+[Sat Apr 12 16:04:56 2025] Threat detected: THREAT:ENEMY_AIRCRAFT:51.5074,-0.1278
+[Sat Apr 12 16:04:56 2025] Sent encrypted launch command
+[Sat Apr 12 16:04:56 2025] Sent encrypted launch command
+[Sat Apr 12 16:05:08 2025] Received: THREAT:ENEMY_SATELLITE:55.7558,37.6173
+[Sat Apr 12 16:05:08 2025] Threat detected: THREAT:ENEMY_SATELLITE:55.7558,37.6173
+[Sat Apr 12 16:05:08 2025] Sent encrypted launch command
+[Sat Apr 12 16:05:08 2025] Sent encrypted launch command
+[Sat Apr 12 16:05:36 2025] Received: THREAT:ENEMY_AIRCRAFT:51.5074,-0.1278
+[Sat Apr 12 16:05:36 2025] Threat detected: THREAT:ENEMY_AIRCRAFT:51.5074,-0.1278
+[Sat Apr 12 16:05:36 2025] Sent encrypted launch command
+[Sat Apr 12 16:05:36 2025] Sent encrypted launch command
+[Sat Apr 12 16:05:44 2025] Received: THREAT:ENEMY_SUB:48.8566,2.3522
+[Sat Apr 12 16:05:44 2025] Threat detected: THREAT:ENEMY_SUB:48.8566,2.3522
+[Sat Apr 12 16:05:44 2025] Sent encrypted launch command
+[Sat Apr 12 16:05:44 2025] Sent encrypted launch command
+[Sat Apr 12 16:05:52 2025] Received: THREAT:ENEMY_SUB:48.8566,2.3522
+[Sat Apr 12 16:05:52 2025] Threat detected: THREAT:ENEMY_SUB:48.8566,2.3522
+[Sat Apr 12 16:06:06 2025] Received: THREAT:ENEMY_AIRCRAFT:51.5074,-0.1278
+[Sat Apr 12 16:06:06 2025] Threat detected: THREAT:ENEMY_AIRCRAFT:51.5074,-0.1278
+[Sat Apr 12 16:06:26 2025] Received: THREAT:ENEMY_AIRCRAFT:51.5074,-0.1278
+[Sat Apr 12 16:06:26 2025] Threat detected: THREAT:ENEMY_AIRCRAFT:51.5074,-0.1278
+[Sat Apr 12 16:06:26 2025] Sent encrypted launch command
+[Sat Apr 12 16:06:26 2025] Sent encrypted launch command
+[Sat Apr 12 16:06:56 2025] Received: THREAT:ENEMY_AIRCRAFT:51.5074,-0.1278
+[Sat Apr 12 16:06:56 2025] Threat detected: THREAT:ENEMY_AIRCRAFT:51.5074,-0.1278
+[Sat Apr 12 16:07:16 2025] Received: THREAT:ENEMY_AIRCRAFT:51.5074,-0.1278
+[Sat Apr 12 16:07:16 2025] Threat detected: THREAT:ENEMY_AIRCRAFT:51.5074,-0.1278
+[Sat Apr 12 16:07:16 2025] Sent encrypted launch command
+[Sat Apr 12 16:07:16 2025] Sent encrypted launch command
+[Sat Apr 12 16:07:24 2025] Received: THREAT:ENEMY_SUB:48.8566,2.3522
+[Sat Apr 12 16:07:24 2025] Threat detected: THREAT:ENEMY_SUB:48.8566,2.3522
+[Sat Apr 12 16:07:53 2025] Received: THREAT:ENEMY_SATELLITE:55.7558,37.6173
+[Sat Apr 12 16:07:53 2025] Threat detected: THREAT:ENEMY_SATELLITE:55.7558,37.6173
+[Sat Apr 12 16:07:53 2025] Sent encrypted launch command
+[Sat Apr 12 16:07:53 2025] Sent encrypted launch command
+[Sat Apr 12 16:08:01 2025] Received: THREAT:ENEMY_SUB:48.8566,2.3522
+[Sat Apr 12 16:08:01 2025] Threat detected: THREAT:ENEMY_SUB:48.8566,2.3522
+[Sat Apr 12 16:08:01 2025] Sent encrypted launch command
+[Sat Apr 12 16:08:01 2025] Sent encrypted launch command
+[Sat Apr 12 16:08:36 2025] Received: THREAT:ENEMY_AIRCRAFT:51.5074,-0.1278
+[Sat Apr 12 16:08:36 2025] Threat detected: THREAT:ENEMY_AIRCRAFT:51.5074,-0.1278
+[Sat Apr 12 16:08:36 2025] Sent encrypted launch command
+[Sat Apr 12 16:08:36 2025] Sent encrypted launch command
+[Sat Apr 12 16:08:46 2025] Received: THREAT:ENEMY_AIRCRAFT:51.5074,-0.1278
+[Sat Apr 12 16:08:46 2025] Threat detected: THREAT:ENEMY_AIRCRAFT:51.5074,-0.1278
+[Sat Apr 12 16:08:46 2025] Sent encrypted launch command
+[Sat Apr 12 16:08:46 2025] Sent encrypted launch command
+[Sat Apr 12 16:08:56 2025] Received: THREAT:ENEMY_AIRCRAFT:51.5074,-0.1278
+[Sat Apr 12 16:08:56 2025] Threat detected: THREAT:ENEMY_AIRCRAFT:51.5074,-0.1278
+[Sat Apr 12 16:08:56 2025] Sent encrypted launch command
+[Sat Apr 12 16:08:56 2025] Sent encrypted launch command
+[Sat Apr 12 16:09:26 2025] Received: THREAT:ENEMY_AIRCRAFT:51.5074,-0.1278
+[Sat Apr 12 16:09:26 2025] Threat detected: THREAT:ENEMY_AIRCRAFT:51.5074,-0.1278
+[Sat Apr 12 16:09:56 2025] Received: THREAT:ENEMY_AIRCRAFT:51.5074,-0.1278
+[Sat Apr 12 16:09:56 2025] Threat detected: THREAT:ENEMY_AIRCRAFT:51.5074,-0.1278
+[Sat Apr 12 16:10:16 2025] Received: THREAT:ENEMY_AIRCRAFT:51.5074,-0.1278
+[Sat Apr 12 16:10:16 2025] Threat detected: THREAT:ENEMY_AIRCRAFT:51.5074,-0.1278
+[Sat Apr 12 16:10:16 2025] Sent encrypted launch command
+[Sat Apr 12 16:10:16 2025] Sent encrypted launch command
+[Sat Apr 12 16:10:24 2025] Received: THREAT:ENEMY_SUB:48.8566,2.3522
+[Sat Apr 12 16:10:24 2025] Threat detected: THREAT:ENEMY_SUB:48.8566,2.3522
+[Sat Apr 12 16:10:24 2025] Sent encrypted launch command
+[Sat Apr 12 16:10:24 2025] Sent encrypted launch command
+[Sat Apr 12 16:10:26 2025] Received: THREAT:ENEMY_AIRCRAFT:51.5074,-0.1278
+[Sat Apr 12 16:10:26 2025] Threat detected: THREAT:ENEMY_AIRCRAFT:51.5074,-0.1278
+[Sat Apr 12 16:11:56 2025] Received: THREAT:ENEMY_AIRCRAFT:51.5074,-0.1278
+[Sat Apr 12 16:11:56 2025] Threat detected: THREAT:ENEMY_AIRCRAFT:51.5074,-0.1278
+[Sat Apr 12 16:12:08 2025] Received: THREAT:ENEMY_SATELLITE:55.7558,37.6173
+[Sat Apr 12 16:12:08 2025] Threat detected: THREAT:ENEMY_SATELLITE:55.7558,37.6173
+[Sat Apr 12 16:12:46 2025] Received: THREAT:ENEMY_AIRCRAFT:51.5074,-0.1278
+[Sat Apr 12 16:12:46 2025] Threat detected: THREAT:ENEMY_AIRCRAFT:51.5074,-0.1278
+[Sat Apr 12 16:12:46 2025] Sent encrypted launch command
+[Sat Apr 12 16:12:46 2025] Sent encrypted launch command
+[Sat Apr 12 16:12:56 2025] Received: THREAT:ENEMY_AIRCRAFT:51.5074,-0.1278
+[Sat Apr 12 16:12:56 2025] Threat detected: THREAT:ENEMY_AIRCRAFT:51.5074,-0.1278
+[Sat Apr 12 16:12:56 2025] Sent encrypted launch command
+[Sat Apr 12 16:12:56 2025] Sent encrypted launch command
+[Sat Apr 12 16:13:38 2025] Received: THREAT:ENEMY_SATELLITE:55.7558,37.6173
+[Sat Apr 12 16:13:38 2025] Threat detected: THREAT:ENEMY_SATELLITE:55.7558,37.6173
+[Sat Apr 12 16:13:53 2025] Received: THREAT:ENEMY_SATELLITE:55.7558,37.6173
+[Sat Apr 12 16:13:53 2025] Threat detected: THREAT:ENEMY_SATELLITE:55.7558,37.6173
+[Sat Apr 12 16:13:53 2025] Sent encrypted launch command
+[Sat Apr 12 16:13:53 2025] Sent encrypted launch command
+[Sat Apr 12 16:13:56 2025] Received: THREAT:ENEMY_AIRCRAFT:51.5074,-0.1278
+[Sat Apr 12 16:13:56 2025] Threat detected: THREAT:ENEMY_AIRCRAFT:51.5074,-0.1278
+[Sat Apr 12 16:13:56 2025] Sent encrypted launch command
+[Sat Apr 12 16:13:56 2025] Sent encrypted launch command
+[Sat Apr 12 16:14:16 2025] Received: THREAT:ENEMY_AIRCRAFT:51.5074,-0.1278
+[Sat Apr 12 16:14:16 2025] Threat detected: THREAT:ENEMY_AIRCRAFT:51.5074,-0.1278
+[Sat Apr 12 16:14:26 2025] Received: THREAT:ENEMY_AIRCRAFT:51.5074,-0.1278
+[Sat Apr 12 16:14:26 2025] Threat detected: THREAT:ENEMY_AIRCRAFT:51.5074,-0.1278
