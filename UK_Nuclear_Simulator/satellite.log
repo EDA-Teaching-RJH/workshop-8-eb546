@@ -1,0 +1,4 @@
+[Sat Apr 12 22:45:44 2025] Connected to nuclearControl
+[Sat Apr 12 22:45:44 2025] Checking for threats
+[Sat Apr 12 22:45:44 2025] Sent intelligence: THREAT ---> SPACE ---> ENEMY_SATELLITE
+[Sat Apr 12 22:53:46 2025] Received shutdown signal
