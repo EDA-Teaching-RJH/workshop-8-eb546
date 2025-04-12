@@ -72,6 +72,14 @@ int main() {
             break;
         }
 
+        buffer[n] = '\0';
+
+        // Check for shutdown signal
+        if (strcmp(buffer, "SHUTDOWN") == 0) {
+            log_message(log_fp, "Received shutdown signal");
+            break;
+        }
+
         // Decrypt message
         char decrypted[BUFFER_SIZE] = {0};
         decrypt_message(buffer, n, decrypted);
@@ -80,20 +88,24 @@ int main() {
         log_message(log_fp, log_msg);
 
         // Process launch command
-        if (strstr(decrypted, "LAUNCH ---> TARGET_AIR")) {
-            log_message(log_fp, "Launch command verified for air target. Initiating countdown...\n");
+        if (strstr(decrypted, "LAUNCH:TARGET_AIR")) {
+            log_message(log_fp, "Launch command verified for air target. Initiating countdown...");
+            printf("Missile Silo: Launch command received for air target.\n");
             for (int i = 10; i >= 0; i--) {
                 snprintf(log_msg, BUFFER_SIZE, "Launch in %d seconds", i);
                 log_message(log_fp, log_msg);
+                printf("Missile Silo: Launch in %d seconds\n", i);
                 sleep(1);
             }
-            log_message(log_fp, "Missile launched to air target!");
+            log_message(log_fp, "Missile launched to air target");
+            printf("Missile Silo: Missile launched to air target\n");
         }
     }
 
     // Cleanup
     fclose(log_fp);
     close(sockfd);
+    printf("Missile Silo: Terminated\n");
     return 0;
 }
 
