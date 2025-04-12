@@ -42,8 +42,22 @@ int main() {
     server_addr.sin_port = htons(PORT);
     inet_pton(AF_INET, SERVER_IP, &server_addr.sin_addr);
 
-    if (connect(sockfd, (struct sockaddr *)&server_addr, sizeof(server_addr)) < 0) {
-        perror("Connection failed");
+    // Retry connect
+    int connect_retries = 5;
+    while (connect_retries > 0) {
+        if (connect(sockfd, (struct sockaddr *)&server_addr, sizeof(server_addr)) == 0) {
+            break;
+        }
+        char log_msg[BUFFER_SIZE];
+        snprintf(log_msg, BUFFER_SIZE, "Connection failed, retrying (%d left): %s", connect_retries, strerror(errno));
+        log_message(log_fp, log_msg);
+        printf("Satelite: %s\n", log_msg);
+        sleep(1);
+        connect_retries--;
+    }
+    if (connect_retries == 0) {
+        log_message(log_fp, "Connection failed after retries");
+        printf("Satellite: Connection failed after retries\n");
         close(sockfd);
         fclose(log_fp);
         exit(1);
@@ -52,7 +66,10 @@ int main() {
     // Send client type
     char *type = "satellite";
     if (write(sockfd, type, strlen(type)) < 0) {
-        perror("Failed to send client type");
+        char log_msg[BUFFER_SIZE];
+        snprintf(log_msg, BUFFER_SIZE, "Failed to send client type: %s", strerror(errno));
+        log_message(log_fp, log_msg);
+        printf("Satelite: %s\n", log_msg);
         close(sockfd);
         fclose(log_fp);
         exit(1);
@@ -63,19 +80,36 @@ int main() {
     // Simulate sending intelligence
     srand(time(NULL));
     char buffer[BUFFER_SIZE];
+    int first_loop = 1;
     while (1) {
-        if (rand() % 10 < 8) { // 80% chance for testing
+        log_message(log_fp, "Checking for threats");
+        printf("Satellite: Checking for threats\n");
+
+        if (first_loop || rand() % 10 < 8) { // Force threat on first loop, then 80%
             char intel[] = "THREAT ---> SPACE ---> ENEMY_SATELLITE ---> Coordinate: 55.7558,37.6173";
-            if (write(sockfd, intel, strlen(intel)) < 0) {
-                char log_msg[BUFFER_SIZE];
-                snprintf(log_msg, BUFFER_SIZE, "Failed to send intelligence: %s", strerror(errno));
-                log_message(log_fp, log_msg);
-                printf("Satellite: %s\n", log_msg);
-            } else {
-                log_message(log_fp, "Sent intelligence: THREAT ---> SPACE ---> ENEMY_SATELLITE");
-                printf("Satellite: Sent intelligence: THREAT ---> SPACE ---> ENEMY_SATELLITE\n");
+            int write_retries = 3;
+            int sent = 0;
+            while (write_retries > 0 && !sent) {
+                if (write(sockfd, intel, strlen(intel)) > 0) {
+                    log_message(log_fp, "Sent intelligence: THREAT ---> SPACE ---> ENEMY_SATELLITE");
+                    printf("Satellite: Sent intelligence: THREAT ---> SPACE ---> ENEMY_SATELLITE\n");
+                    sent = 1;
+                } else {
+                    char log_msg[BUFFER_SIZE];
+                    snprintf(log_msg, BUFFER_SIZE, "Failed to send intelligence: %s", strerror(errno));
+                    log_message(log_fp, log_msg);
+                    printf("Satellite: %s\n", log_msg);
+                    write_retries--;
+                    usleep(100000); // 100ms
+                }
+            }
+            if (!sent) {
+                log_message(log_fp, "Aborted sending intelligence after retries");
+                printf("Satellite: Aborted sending intelligence after retries\n");
+                break;
             }
         }
+        first_loop = 0;
 
         // Check for server messages
         memset(buffer, 0, BUFFER_SIZE);
@@ -103,4 +137,3 @@ int main() {
     printf("Satellite: Terminated\n");
     return 0;
 }
-

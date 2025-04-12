@@ -57,6 +57,10 @@ void decrypt_message(const char *input, int in_len, char *output) {
 
 // Log message to file
 void log_message(const char *msg) {
+    if (!log_fp) {
+        printf("NuclearControl: Log file closed, cannot log: %s\n", msg);
+        return;
+    }
     time_t now = time(NULL);
     char *time_str = ctime(&now);
     time_str[strlen(time_str) - 1] = '\0';
@@ -105,19 +109,43 @@ void *handle_client(void *arg) {
     // Set socket to non-blocking
     fcntl(sockfd, F_SETFL, O_NONBLOCK);
 
-    // Read client type
+    // Read client type with retry (up to 5 seconds)
     memset(buffer, 0, BUFFER_SIZE);
-    int n = read(sockfd, buffer, BUFFER_SIZE - 1);
-    if (n > 0) {
-        buffer[n] = '\0';
-        client_type = strdup(buffer);
+    int retries = 50; // 50 * 100ms = 5s
+    int n;
+    while (retries > 0) {
+        n = read(sockfd, buffer, BUFFER_SIZE - 1);
+        if (n > 0) {
+            buffer[n] = '\0';
+            client_type = strdup(buffer);
+            char log_msg[BUFFER_SIZE];
+            snprintf(log_msg, BUFFER_SIZE, "New client connected: %s", client_type);
+            log_message(log_msg);
+            printf("NuclearControl: %s\n", log_msg);
+            break;
+        } else if (n == 0) {
+            char log_msg[BUFFER_SIZE];
+            snprintf(log_msg, BUFFER_SIZE, "Client disconnected before sending type");
+            log_message(log_msg);
+            printf("NuclearControl: %s\n", log_msg);
+            close(sockfd);
+            return NULL;
+        } else {
+            if (errno != EAGAIN && errno != EWOULDBLOCK) {
+                char log_msg[BUFFER_SIZE];
+                snprintf(log_msg, BUFFER_SIZE, "Error reading client type: %s", strerror(errno));
+                log_message(log_msg);
+                printf("NuclearControl: %s\n", log_msg);
+                close(sockfd);
+                return NULL;
+            }
+            usleep(100000); // 100ms
+            retries--;
+        }
+    }
+    if (!client_type) {
         char log_msg[BUFFER_SIZE];
-        snprintf(log_msg, BUFFER_SIZE, "New client connected: %s", client_type);
-        log_message(log_msg);
-        printf("NuclearControl: %s\n", log_msg);
-    } else {
-        char log_msg[BUFFER_SIZE];
-        snprintf(log_msg, BUFFER_SIZE, "Failed to read client type: %s", n == 0 ? "closed" : strerror(errno));
+        snprintf(log_msg, BUFFER_SIZE, "Failed to read client type after retries");
         log_message(log_msg);
         printf("NuclearControl: %s\n", log_msg);
         close(sockfd);
@@ -171,8 +199,11 @@ void *handle_client(void *arg) {
                 printf("NuclearControl: %s\n", log_msg);
                 break;
             }
-            // Sleep to prevent CPU overuse (mimics timeout)
-            usleep(100000); // 100ms
+            // Debug: Log read attempt
+            char log_msg[BUFFER_SIZE];
+            snprintf(log_msg, BUFFER_SIZE, "Read from %s: no data available", client_type);
+            log_message(log_msg);
+            usleep(200000); // 200ms to reduce CPU load
         }
     }
 
@@ -295,6 +326,7 @@ void *menu_system(void *arg) {
 
                 // Close log file
                 fclose(log_fp);
+                log_fp = NULL;
                 pthread_exit(NULL);
             }
             case 4: {
@@ -420,3 +452,4 @@ int main(int argc, char *argv[]) {
     pthread_join(menu_thread, NULL);
     return 0;
 }
+
