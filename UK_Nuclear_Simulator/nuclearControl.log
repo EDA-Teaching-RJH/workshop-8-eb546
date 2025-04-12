@@ -3,3 +3,13 @@
 [Sat Apr 12 20:37:31 2025] Cleared log file: radar.log
 [Sat Apr 12 20:37:31 2025] Cleared log file: satelite.log
 [Sat Apr 12 20:37:31 2025] Reopened log file after clearing
+[Sat Apr 12 20:39:37 2025] Server started
+[Sat Apr 12 20:39:40 2025] Test mode: Simulating THREAT ---> SEA ---> ENEMY_SUB: Coordinate: 48.8566,2.3522
+[Sat Apr 12 20:39:51 2025] New client connected: silo
+[Sat Apr 12 20:39:56 2025] New client connected: submarine
+[Sat Apr 12 20:40:01 2025] New client connected: radar
+[Sat Apr 12 20:40:01 2025] Received from radar: THREAT ---> AIR ---> ENEMY_AIRCRAFT ---> Coordinate: 51.5074,-0.1278
+[Sat Apr 12 20:40:14 2025] New client connected: satelite
+[Sat Apr 12 20:40:28 2025] Sent encrypted launch command to silo
+[Sat Apr 12 20:48:20 2025] Sent encrypted launch command to silo
+[Sat Apr 12 21:36:53 2025] Server started

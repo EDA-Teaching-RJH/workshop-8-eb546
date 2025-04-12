@@ -63,15 +63,26 @@ int main() {
     srand(time(NULL));
     char buffer[BUFFER_SIZE];
     while (1) {
-        if (rand() % 10 < 3) {
+        if (rand() % 10 < 8) { // 80% chance for testing
             char intel[] = "THREAT ---> AIR ---> ENEMY_AIRCRAFT ---> Coordinate: 51.5074,-0.1278";
-            if (write(sockfd, intel, strlen(intel)) < 0) {
-                perror("Failed to send intelligence");
-                log_message(log_fp, "Failed to send intelligence");
+            int retries = 3;
+            int sent = 0;
+            while (retries > 0 && !sent) {
+                if (write(sockfd, intel, strlen(intel)) > 0) {
+                    log_message(log_fp, "Sent intelligence: THREAT ---> AIR ---> ENEMY_AIRCRAFT");
+                    printf("Radar: Sent intelligence\n");
+                    sent = 1;
+                } else {
+                    perror("Failed to send intelligence");
+                    log_message(log_fp, "Failed to send intelligence");
+                    retries--;
+                    usleep(100000);
+                }
+            }
+            if (!sent) {
+                log_message(log_fp, "Aborted sending intelligence after retries");
                 break;
             }
-            log_message(log_fp, "Sent intelligence: THREAT ---> AIR ---> ENEMY_AIRCRAFT");
-            printf("Radar: Sent intelligence\n");
         }
 
         // Check for server messages
@@ -96,3 +107,4 @@ int main() {
     printf("Radar: Terminated\n");
     return 0;
 }
+

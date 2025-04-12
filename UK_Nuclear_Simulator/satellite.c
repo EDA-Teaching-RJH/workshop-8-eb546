@@ -8,7 +8,7 @@
 #define SERVER_IP "127.0.0.1"
 #define PORT 8080
 #define BUFFER_SIZE 1024
-#define LOG_FILE "satelite.log"
+#define LOG_FILE "satelLite.log"
 
 // Log message
 void log_message(FILE *fp, const char *msg) {
@@ -49,7 +49,7 @@ int main() {
     }
 
     // Send client type
-    char *type = "satelite";
+    char *type = "satelLite";
     if (write(sockfd, type, strlen(type)) < 0) {
         perror("Failed to send client type");
         close(sockfd);
@@ -93,7 +93,7 @@ int main() {
     // Cleanup
     fclose(log_fp);
     close(sockfd);
-    printf("Satelite: Terminated\n");
+    printf("SatelLite: Terminated\n");
     return 0;
 }
 
