@@ -68,9 +68,9 @@ int main() {
     while (1) {
         // Randomly send intelligence
         if (rand() % 10 < 2) {
-            char intel[] = "THREAT:ENEMY_SUB:48.8566,2.3522";
+            char intel[] = "THREAT:SEA:ENEMY_SUB:48.8566,2.3522";
             write(sockfd, intel, strlen(intel));
-            log_message(log_fp, "Sent intelligence: THREAT:ENEMY_SUB");
+            log_message(log_fp, "Sent intelligence: THREAT:SEA:ENEMY_SUB");
         }
 
         // Listen for commands
@@ -78,6 +78,14 @@ int main() {
         int n = read(sockfd, buffer, BUFFER_SIZE);
         if (n <= 0) {
             log_message(log_fp, "Disconnected from server");
+            break;
+        }
+
+        buffer[n] = '\0';
+
+        // Check for shutdown signal
+        if (strcmp(buffer, "SHUTDOWN") == 0) {
+            log_message(log_fp, "Received shutdown signal");
             break;
         }
 
@@ -89,18 +97,26 @@ int main() {
         log_message(log_fp, log_msg);
 
         // Process launch command
-        if (strstr(decrypted, "LAUNCH")) {
-            log_message(log_fp, "Launch command verified. Launching missile...");
-            sleep(3); // Simulate longer launch time
-            log_message(log_fp, "Missile launched to target");
+        if (strstr(decrypted, "LAUNCH:TARGET_SEA_SPACE")) {
+            log_message(log_fp, "Launch command verified for sea/space target. Initiating countdown...");
+            printf("Submarine: Launch command received for sea/space target.\n");
+            for (int i = 10; i >= 0; i--) {
+                snprintf(log_msg, BUFFER_SIZE, "Launch in %d seconds", i);
+                log_message(log_fp, log_msg);
+                printf("Submarine: Launch in %d seconds\n", i);
+                sleep(1);
+            }
+            log_message(log_fp, "Missile launched to sea/space target");
+            printf("Submarine: Missile launched to sea/space target\n");
         }
 
-        sleep(5); // Simulate periodic checks
+        sleep(5);
     }
 
     // Cleanup
     fclose(log_fp);
     close(sockfd);
+    printf("Submarine: Terminated\n");
     return 0;
 }
 

@@ -44,3 +44,8 @@
 [Sat Apr 12 16:24:36 2025] Sent intelligence: THREAT:ENEMY_AIRCRAFT
 [Sat Apr 12 16:24:46 2025] Sent intelligence: THREAT:ENEMY_AIRCRAFT
 [Sat Apr 12 16:25:06 2025] Sent intelligence: THREAT:ENEMY_AIRCRAFT
+[Sat Apr 12 17:13:11 2025] Connected to nuclearControl
+[Sat Apr 12 17:13:11 2025] Sent intelligence: THREAT:AIR:ENEMY_AIRCRAFT
+[Sat Apr 12 17:21:34 2025] Received shutdown signal
+[Sat Apr 12 17:29:11 2025] Connected to nuclearControl
+[Sat Apr 12 17:37:07 2025] Received shutdown signal

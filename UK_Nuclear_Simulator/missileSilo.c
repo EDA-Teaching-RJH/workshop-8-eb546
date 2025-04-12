@@ -12,7 +12,7 @@
 #define KEY "0123456789abcdef0123456789abcdef"
 #define LOG_FILE "missileSilo.log"
 
-// Decrypt message using AES-256
+// Decrypt message
 void decrypt_message(const char *input, int in_len, char *output) {
     AES_KEY dec_key;
     AES_set_decrypt_key((unsigned char *)KEY, 256, &dec_key);
@@ -21,7 +21,7 @@ void decrypt_message(const char *input, int in_len, char *output) {
     }
 }
 
-// Log message to file
+// Log message
 void log_message(FILE *fp, const char *msg) {
     time_t now = time(NULL);
     char *time_str = ctime(&now);
@@ -72,6 +72,14 @@ int main() {
             break;
         }
 
+        buffer[n] = '\0';
+
+        // Check for shutdown signal
+        if (strcmp(buffer, "SHUTDOWN") == 0) {
+            log_message(log_fp, "Received shutdown signal");
+            break;
+        }
+
         // Decrypt message
         char decrypted[BUFFER_SIZE] = {0};
         decrypt_message(buffer, n, decrypted);
@@ -80,17 +88,24 @@ int main() {
         log_message(log_fp, log_msg);
 
         // Process launch command
-        if (strstr(decrypted, "LAUNCH")) {
-            log_message(log_fp, "Launch command verified. Launching missile...");
-            // Simulate launch
-            sleep(2);
-            log_message(log_fp, "Missile launched to target");
+        if (strstr(decrypted, "LAUNCH:TARGET_AIR")) {
+            log_message(log_fp, "Launch command verified for air target. Initiating countdown...");
+            printf("Missile Silo: Launch command received for air target.\n");
+            for (int i = 10; i >= 0; i--) {
+                snprintf(log_msg, BUFFER_SIZE, "Launch in %d seconds", i);
+                log_message(log_fp, log_msg);
+                printf("Missile Silo: Launch in %d seconds\n", i);
+                sleep(1);
+            }
+            log_message(log_fp, "Missile launched to air target");
+            printf("Missile Silo: Missile launched to air target\n");
         }
     }
 
     // Cleanup
     fclose(log_fp);
     close(sockfd);
+    printf("Missile Silo: Terminated\n");
     return 0;
 }
 

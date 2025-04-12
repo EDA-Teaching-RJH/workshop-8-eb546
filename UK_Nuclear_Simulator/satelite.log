@@ -18,3 +18,10 @@
 [Sat Apr 12 16:23:23 2025] Sent intelligence: THREAT:ENEMY_SATELLITE
 [Sat Apr 12 16:23:38 2025] Sent intelligence: THREAT:ENEMY_SATELLITE
 [Sat Apr 12 16:24:23 2025] Sent intelligence: THREAT:ENEMY_SATELLITE
+[Sat Apr 12 16:26:08 2025] Sent intelligence: THREAT:ENEMY_SATELLITE
+[Sat Apr 12 17:13:19 2025] Connected to nuclearControl
+[Sat Apr 12 17:21:34 2025] Received shutdown signal
+[Sat Apr 12 17:29:27 2025] Connected to nuclearControl
+[Sat Apr 12 17:29:27 2025] Sent client type: satelite
+[Sat Apr 12 17:29:27 2025] Sent intelligence: THREAT:SPACE:ENEMY_SATELLITE
+[Sat Apr 12 17:37:07 2025] Received shutdown signal

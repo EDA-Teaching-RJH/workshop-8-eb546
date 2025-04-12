@@ -208,3 +208,20 @@
 [Sat Apr 12 16:24:46 2025] Threat detected: THREAT:ENEMY_AIRCRAFT:51.5074,-0.1278
 [Sat Apr 12 16:24:46 2025] Sent encrypted launch command
 [Sat Apr 12 16:24:46 2025] Sent encrypted launch command
+[Sat Apr 12 17:12:37 2025] Server started
+[Sat Apr 12 17:12:40 2025] Test mode: Simulating THREAT:AIR:ENEMY_AIRCRAFT:51.5074,-0.1278
+[Sat Apr 12 17:12:45 2025] silo
+[Sat Apr 12 17:12:56 2025] submarine
+[Sat Apr 12 17:13:11 2025] radar
+[Sat Apr 12 17:13:11 2025] Received: THREAT:AIR:ENEMY_AIRCRAFT:51.5074,-0.1278
+[Sat Apr 12 17:13:19 2025] satelite
+[Sat Apr 12 17:15:56 2025] Sent encrypted launch command to silo
+[Sat Apr 12 17:17:59 2025] Sent encrypted launch command to silo
+[Sat Apr 12 17:28:21 2025] Server started
+[Sat Apr 12 17:28:24 2025] Test mode: Simulating THREAT:AIR:ENEMY_AIRCRAFT:51.5074,-0.1278
+[Sat Apr 12 17:28:29 2025] New client connected: silo
+[Sat Apr 12 17:28:56 2025] New client connected: submarine
+[Sat Apr 12 17:29:11 2025] New client connected: radar
+[Sat Apr 12 17:29:27 2025] New client connected: sateliteTHREAT:SPACE:ENEMY_SATELLITE:55.7558,37.6173
+[Sat Apr 12 17:30:16 2025] Sent encrypted launch command to silo
+[Sat Apr 12 17:32:01 2025] Sent encrypted launch command to silo
