@@ -8,7 +8,7 @@
 #define SERVER_IP "127.0.0.1"
 #define PORT 8080
 #define BUFFER_SIZE 1024
-#define LOG_FILE "satelite.log"
+#define LOG_FILE "satellite.log"
 
 // Log message
 void log_message(FILE *fp, const char *msg) {

@@ -14,7 +14,7 @@
 #define BUFFER_SIZE 1024
 #define KEY "0123456789abcdef0123456789abcdef"
 #define LOG_FILE "nuclearControl.log"
-#define LOG_FILES {"nuclearControl.log", "missileSilo.log", "submarine.log", "radar.log", "satelite.log"}
+#define LOG_FILES {"nuclearControl.log", "missileSilo.log", "submarine.log", "radar.log", "satellite.log"}
 
 // Structure for client info
 typedef struct {
@@ -65,7 +65,7 @@ void log_message(const char *msg) {
 
 // Clear all log files
 void clear_logs() {
-    const char *log_files[] = {"nuclearControl.log", "missileSilo.log", "submarine.log", "radar.log", "satelite.log"};
+    const char *log_files[] = {"nuclearControl.log", "missileSilo.log", "submarine.log", "radar.log", "satellite.log"};
     int num_files = 5;
 
     for (int i = 0; i < num_files; i++) {

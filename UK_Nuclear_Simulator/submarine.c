@@ -66,12 +66,6 @@ int main() {
     srand(time(NULL));
     char buffer[BUFFER_SIZE];
     while (1) {
-        // Randomly send intelligence
-        if (rand() % 10 < 2) {
-            char intel[] = "THREAT:SEA:ENEMY_SUB:48.8566,2.3522";
-            write(sockfd, intel, strlen(intel));
-            log_message(log_fp, "Sent intelligence: THREAT:SEA:ENEMY_SUB");
-        }
 
         // Listen for commands
         memset(buffer, 0, BUFFER_SIZE);
