@@ -9,7 +9,7 @@
 #define SERVER_IP "127.0.0.1"
 #define PORT 8080
 #define BUFFER_SIZE 1024
-#define LOG_FILE "satelite.log"
+#define LOG_FILE "satellite.log"
 
 // Log message
 void log_message(FILE *fp, const char *msg) {
@@ -50,7 +50,7 @@ int main() {
     }
 
     // Send client type
-    char *type = "satelite";
+    char *type = "satellite";
     if (write(sockfd, type, strlen(type)) < 0) {
         perror("Failed to send client type");
         close(sockfd);
@@ -58,7 +58,7 @@ int main() {
         exit(1);
     }
     log_message(log_fp, "Connected to nuclearControl");
-    printf("Satelite: Connected to nuclearControl\n");
+    printf("Satellite: Connected to nuclearControl\n");
 
     // Simulate sending intelligence
     srand(time(NULL));
@@ -70,10 +70,10 @@ int main() {
                 char log_msg[BUFFER_SIZE];
                 snprintf(log_msg, BUFFER_SIZE, "Failed to send intelligence: %s", strerror(errno));
                 log_message(log_fp, log_msg);
-                printf("Satelite: %s\n", log_msg);
+                printf("Satellite: %s\n", log_msg);
             } else {
                 log_message(log_fp, "Sent intelligence: THREAT ---> SPACE ---> ENEMY_SATELLITE");
-                printf("Satelite: Sent intelligence: THREAT ---> SPACE ---> ENEMY_SATELLITE\n");
+                printf("Satellite: Sent intelligence: THREAT ---> SPACE ---> ENEMY_SATELLITE\n");
             }
         }
 
@@ -84,13 +84,13 @@ int main() {
             char log_msg[BUFFER_SIZE];
             snprintf(log_msg, BUFFER_SIZE, "Disconnected from server: %s", n == 0 ? "closed" : strerror(errno));
             log_message(log_fp, log_msg);
-            printf("Satelite: %s\n", log_msg);
+            printf("Satellite: %s\n", log_msg);
             break;
         }
         buffer[n] = '\0';
         if (strcmp(buffer, "SHUTDOWN") == 0) {
             log_message(log_fp, "Received shutdown signal");
-            printf("Satelite: Received shutdown signal\n");
+            printf("Satellite: Received shutdown signal\n");
             break;
         }
 
@@ -100,7 +100,7 @@ int main() {
     // Cleanup
     fclose(log_fp);
     close(sockfd);
-    printf("Satelite: Terminated\n");
+    printf("Satellite: Terminated\n");
     return 0;
 }
 
