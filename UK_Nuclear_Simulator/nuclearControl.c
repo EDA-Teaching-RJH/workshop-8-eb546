@@ -7,6 +7,8 @@
 #include <pthread.h>
 #include <openssl/aes.h>
 #include <time.h>
+#include <fcntl.h>
+#include <errno.h>
 
 // Constants
 #define PORT 8080
@@ -62,35 +64,34 @@ void log_message(const char *msg) {
     fflush(log_fp);
 }
 
-// Clear all log files
-void clear_logs() {
+// Delete all log files
+void delete_logs() {
     const char *log_files[] = {"nuclearControl.log", "missileSilo.log", "submarine.log", "radar.log", "satelite.log"};
     int num_files = 5;
 
     for (int i = 0; i < num_files; i++) {
-        FILE *fp = fopen(log_files[i], "w");
-        if (fp) {
-            fclose(fp);
-            chmod(log_files[i], 0600);
+        if (unlink(log_files[i]) == 0) {
             char log_msg[BUFFER_SIZE];
-            snprintf(log_msg, BUFFER_SIZE, "Cleared log file: %s", log_files[i]);
+            snprintf(log_msg, BUFFER_SIZE, "Deleted log file: %s", log_files[i]);
             if (strcmp(log_files[i], LOG_FILE) != 0) log_message(log_msg);
-            printf("Cleared %s\n", log_files[i]);
+            printf("NuclearControl: %s\n", log_msg);
         } else {
             char log_msg[BUFFER_SIZE];
-            snprintf(log_msg, BUFFER_SIZE, "Failed to clear log file: %s", log_files[i]);
+            snprintf(log_msg, BUFFER_SIZE, "Failed to delete log file %s: %s", log_files[i], strerror(errno));
             if (strcmp(log_files[i], LOG_FILE) != 0) log_message(log_msg);
-            printf("Failed to clear %s\n", log_files[i]);
+            printf("NuclearControl: %s\n", log_msg);
         }
     }
+
     // Reopen nuclearControl.log
+    fclose(log_fp);
     log_fp = fopen(LOG_FILE, "a");
     if (!log_fp) {
         perror("Failed to reopen log file");
         shutdown_flag = 1;
     } else {
         chmod(LOG_FILE, 0600);
-        log_message("Reopened log file after clearing");
+        log_message("Reopened log file after deletion");
     }
 }
 
@@ -99,51 +100,79 @@ void *handle_client(void *arg) {
     int sockfd = *(int *)arg;
     char buffer[BUFFER_SIZE];
     char *client_type = NULL;
+    free(arg);
 
-    // Get client type from stored clients
-    pthread_mutex_lock(&mutex);
-    for (int i = 0; i < client_count; i++) {
-        if (clients[i].sockfd == sockfd) {
-            client_type = strdup(clients[i].type);
-            break;
-        }
-    }
-    pthread_mutex_unlock(&mutex);
+    // Set socket to non-blocking
+    fcntl(sockfd, F_SETFL, O_NONBLOCK);
 
-    if (!client_type) {
-        log_message("Failed to identify client type");
+    // Read client type
+    memset(buffer, 0, BUFFER_SIZE);
+    int n = read(sockfd, buffer, BUFFER_SIZE - 1);
+    if (n > 0) {
+        buffer[n] = '\0';
+        client_type = strdup(buffer);
+        char log_msg[BUFFER_SIZE];
+        snprintf(log_msg, BUFFER_SIZE, "New client connected: %s", client_type);
+        log_message(log_msg);
+        printf("NuclearControl: %s\n", log_msg);
+    } else {
+        char log_msg[BUFFER_SIZE];
+        snprintf(log_msg, BUFFER_SIZE, "Failed to read client type: %s", n == 0 ? "closed" : strerror(errno));
+        log_message(log_msg);
+        printf("NuclearControl: %s\n", log_msg);
         close(sockfd);
-        free(arg);
         return NULL;
     }
 
-    free(arg);
+    // Store client
+    pthread_mutex_lock(&mutex);
+    if (client_count < MAX_CLIENTS) {
+        clients[client_count].sockfd = sockfd;
+        clients[client_count].type = strdup(client_type);
+        client_count++;
+    } else {
+        char log_msg[BUFFER_SIZE];
+        snprintf(log_msg, BUFFER_SIZE, "Max clients reached, rejecting %s", client_type);
+        log_message(log_msg);
+        printf("NuclearControl: %s\n", log_msg);
+        close(sockfd);
+        free(client_type);
+        pthread_mutex_unlock(&mutex);
+        return NULL;
+    }
+    pthread_mutex_unlock(&mutex);
 
+    // Main loop for client messages
     while (!shutdown_flag) {
         memset(buffer, 0, BUFFER_SIZE);
-        int n = read(sockfd, buffer, BUFFER_SIZE - 1);
-        if (n < 0) {
+        n = read(sockfd, buffer, BUFFER_SIZE - 1);
+        if (n > 0) {
+            buffer[n] = '\0';
             char log_msg[BUFFER_SIZE];
-            snprintf(log_msg, BUFFER_SIZE, "Error reading from %s", client_type);
+            snprintf(log_msg, BUFFER_SIZE, "Received from %s: %s", client_type, buffer);
             log_message(log_msg);
-            break;
-        }
-        if (n == 0) {
+            printf("NuclearControl: %s\n", log_msg);
+
+            // Store threat for menu
+            if (strstr(buffer, "THREAT")) {
+                strncpy(last_threat, buffer, BUFFER_SIZE - 1);
+            }
+        } else if (n == 0) {
             char log_msg[BUFFER_SIZE];
             snprintf(log_msg, BUFFER_SIZE, "%s disconnected", client_type);
             log_message(log_msg);
+            printf("NuclearControl: %s\n", log_msg);
             break;
-        }
-
-        buffer[n] = '\0';
-        char log_msg[BUFFER_SIZE];
-        snprintf(log_msg, BUFFER_SIZE, "Received from %s: %s", client_type, buffer);
-        log_message(log_msg);
-        printf("NuclearControl: %s\n", log_msg);
-
-        // Store threat for menu
-        if (strstr(buffer, "THREAT")) {
-            strncpy(last_threat, buffer, BUFFER_SIZE - 1);
+        } else {
+            if (errno != EAGAIN && errno != EWOULDBLOCK) {
+                char log_msg[BUFFER_SIZE];
+                snprintf(log_msg, BUFFER_SIZE, "Error reading from %s: %s", client_type, strerror(errno));
+                log_message(log_msg);
+                printf("NuclearControl: %s\n", log_msg);
+                break;
+            }
+            // Sleep to prevent CPU overuse (mimics timeout)
+            usleep(100000); // 100ms
         }
     }
 
@@ -171,7 +200,7 @@ void *menu_system(void *arg) {
         printf("1. View and decrypt log messages\n");
         printf("2. Decide launch based on last threat\n");
         printf("3. Exit\n");
-        printf("4. Clear all logs\n");
+        printf("4. Delete all logs\n");
         printf("Enter choice: ");
         if (!fgets(input, sizeof(input), stdin)) continue;
 
@@ -230,7 +259,7 @@ void *menu_system(void *arg) {
                         (asset == 2 && strstr(clients[i].type, "submarine"))) {
                         if (write(clients[i].sockfd, encrypted, enc_len) < 0) {
                             char log_msg[BUFFER_SIZE];
-                            snprintf(log_msg, BUFFER_SIZE, "Failed to send launch command to %s", clients[i].type);
+                            snprintf(log_msg, BUFFER_SIZE, "Failed to send launch command to %s: %s", clients[i].type, strerror(errno));
                             log_message(log_msg);
                         } else {
                             char log_msg[BUFFER_SIZE];
@@ -249,7 +278,15 @@ void *menu_system(void *arg) {
                 // Send shutdown signal to all clients
                 pthread_mutex_lock(&mutex);
                 for (int i = 0; i < client_count; i++) {
-                    write(clients[i].sockfd, "SHUTDOWN", strlen("SHUTDOWN"));
+                    if (write(clients[i].sockfd, "SHUTDOWN", strlen("SHUTDOWN")) < 0) {
+                        char log_msg[BUFFER_SIZE];
+                        snprintf(log_msg, BUFFER_SIZE, "Failed to send SHUTDOWN to %s: %s", clients[i].type, strerror(errno));
+                        log_message(log_msg);
+                    } else {
+                        char log_msg[BUFFER_SIZE];
+                        snprintf(log_msg, BUFFER_SIZE, "Sent SHUTDOWN to %s", clients[i].type);
+                        log_message(log_msg);
+                    }
                     close(clients[i].sockfd);
                     free(clients[i].type);
                 }
@@ -261,8 +298,8 @@ void *menu_system(void *arg) {
                 pthread_exit(NULL);
             }
             case 4: {
-                clear_logs();
-                printf("All logs cleared\n");
+                delete_logs();
+                printf("All logs deleted\n");
                 break;
             }
             default:
@@ -294,6 +331,7 @@ int main(int argc, char *argv[]) {
     int server_fd = socket(AF_INET, SOCK_STREAM, 0);
     if (server_fd < 0) {
         perror("Socket creation failed!");
+        fclose(log_fp);
         exit(1);
     }
 
@@ -305,12 +343,14 @@ int main(int argc, char *argv[]) {
     if (bind(server_fd, (struct sockaddr *)&server_addr, sizeof(server_addr)) < 0) {
         perror("Bind failed!");
         close(server_fd);
+        fclose(log_fp);
         exit(1);
     }
 
     if (listen(server_fd, 10) < 0) {
         perror("Listen failed!");
         close(server_fd);
+        fclose(log_fp);
         exit(1);
     }
 
@@ -322,6 +362,7 @@ int main(int argc, char *argv[]) {
     if (pthread_create(&menu_thread, NULL, menu_system, NULL) != 0) {
         perror("Menu thread creation failed!");
         close(server_fd);
+        fclose(log_fp);
         exit(1);
     }
 
@@ -350,51 +391,28 @@ int main(int argc, char *argv[]) {
         int *client_fd = malloc(sizeof(int));
         *client_fd = accept(server_fd, (struct sockaddr *)&client_addr, &addr_len);
         if (*client_fd < 0) {
-            if (!shutdown_flag) perror("Accept failed");
+            if (!shutdown_flag) {
+                char log_msg[BUFFER_SIZE];
+                snprintf(log_msg, BUFFER_SIZE, "Accept failed: %s", strerror(errno));
+                log_message(log_msg);
+                printf("NuclearControl: %s\n", log_msg);
+            }
             free(client_fd);
             continue;
         }
-
-        // Receive client type
-        char buffer[BUFFER_SIZE] = {0};
-        int n = read(*client_fd, buffer, BUFFER_SIZE - 1);
-        if (n <= 0) {
-            char log_msg[BUFFER_SIZE];
-            snprintf(log_msg, BUFFER_SIZE, "Failed to read client type for socket %d", *client_fd);
-            log_message(log_msg);
-            close(*client_fd);
-            free(client_fd);
-            continue;
-        }
-        buffer[n] = '\0';
-        char log_msg[BUFFER_SIZE];
-        snprintf(log_msg, BUFFER_SIZE, "New client connected: %s", buffer);
-        log_message(log_msg);
-        printf("NuclearControl: %s\n", log_msg);
-
-        pthread_mutex_lock(&mutex);
-        if (client_count < MAX_CLIENTS) {
-            clients[client_count].sockfd = *client_fd;
-            clients[client_count].type = strdup(buffer);
-            client_count++;
-        } else {
-            log_message("Max clients reached");
-            printf("NuclearControl: Max clients reached\n");
-            close(*client_fd);
-            free(client_fd);
-            pthread_mutex_unlock(&mutex);
-            continue;
-        }
-        pthread_mutex_unlock(&mutex);
 
         // Start client thread
         pthread_t thread;
         if (pthread_create(&thread, NULL, handle_client, client_fd) != 0) {
-            perror("Thread creation failed");
+            char log_msg[BUFFER_SIZE];
+            snprintf(log_msg, BUFFER_SIZE, "Thread creation failed: %s", strerror(errno));
+            log_message(log_msg);
+            printf("NuclearControl: %s\n", log_msg);
             close(*client_fd);
             free(client_fd);
+        } else {
+            pthread_detach(thread);
         }
-        pthread_detach(thread);
     }
 
     // Cleanup
@@ -402,4 +420,3 @@ int main(int argc, char *argv[]) {
     pthread_join(menu_thread, NULL);
     return 0;
 }
-

@@ -4,6 +4,7 @@
 #include <unistd.h>
 #include <arpa/inet.h>
 #include <time.h>
+#include <errno.h>
 
 #define SERVER_IP "127.0.0.1"
 #define PORT 8080
@@ -65,23 +66,14 @@ int main() {
     while (1) {
         if (rand() % 10 < 8) { // 80% chance for testing
             char intel[] = "THREAT ---> AIR ---> ENEMY_AIRCRAFT ---> Coordinate: 51.5074,-0.1278";
-            int retries = 3;
-            int sent = 0;
-            while (retries > 0 && !sent) {
-                if (write(sockfd, intel, strlen(intel)) > 0) {
-                    log_message(log_fp, "Sent intelligence: THREAT ---> AIR ---> ENEMY_AIRCRAFT");
-                    printf("Radar: Sent intelligence\n");
-                    sent = 1;
-                } else {
-                    perror("Failed to send intelligence");
-                    log_message(log_fp, "Failed to send intelligence");
-                    retries--;
-                    usleep(100000);
-                }
-            }
-            if (!sent) {
-                log_message(log_fp, "Aborted sending intelligence after retries");
-                break;
+            if (write(sockfd, intel, strlen(intel)) < 0) {
+                char log_msg[BUFFER_SIZE];
+                snprintf(log_msg, BUFFER_SIZE, "Failed to send intelligence: %s", strerror(errno));
+                log_message(log_fp, log_msg);
+                printf("Radar: %s\n", log_msg);
+            } else {
+                log_message(log_fp, "Sent intelligence: THREAT ---> AIR ---> ENEMY_AIRCRAFT");
+                printf("Radar: Sent intelligence: THREAT ---> AIR ---> ENEMY_AIRCRAFT\n");
             }
         }
 
@@ -89,12 +81,16 @@ int main() {
         memset(buffer, 0, BUFFER_SIZE);
         int n = read(sockfd, buffer, BUFFER_SIZE - 1);
         if (n <= 0) {
-            log_message(log_fp, "Disconnected from server");
+            char log_msg[BUFFER_SIZE];
+            snprintf(log_msg, BUFFER_SIZE, "Disconnected from server: %s", n == 0 ? "closed" : strerror(errno));
+            log_message(log_fp, log_msg);
+            printf("Radar: %s\n", log_msg);
             break;
         }
         buffer[n] = '\0';
         if (strcmp(buffer, "SHUTDOWN") == 0) {
             log_message(log_fp, "Received shutdown signal");
+            printf("Radar: Received shutdown signal\n");
             break;
         }
 

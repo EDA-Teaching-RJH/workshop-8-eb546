@@ -43,6 +43,7 @@ int main() {
     int sockfd = socket(AF_INET, SOCK_STREAM, 0);
     if (sockfd < 0) {
         perror("Socket creation failed");
+        fclose(log_fp);
         exit(1);
     }
 
@@ -54,13 +55,20 @@ int main() {
     if (connect(sockfd, (struct sockaddr *)&server_addr, sizeof(server_addr)) < 0) {
         perror("Connection failed");
         close(sockfd);
+        fclose(log_fp);
         exit(1);
     }
 
     // Send client type
     char *type = "silo";
-    write(sockfd, type, strlen(type));
+    if (write(sockfd, type, strlen(type)) < 0) {
+        perror("Failed to send client type");
+        close(sockfd);
+        fclose(log_fp);
+        exit(1);
+    }
     log_message(log_fp, "Connected to nuclearControl");
+    printf("MissileSilo: Connected to nuclearControl\n");
 
     // Listen for commands
     char buffer[BUFFER_SIZE];
@@ -69,6 +77,7 @@ int main() {
         int n = read(sockfd, buffer, BUFFER_SIZE);
         if (n <= 0) {
             log_message(log_fp, "Disconnected from server");
+            printf("MissileSilo: Disconnected from server\n");
             break;
         }
 
@@ -77,6 +86,7 @@ int main() {
         // Check for shutdown signal
         if (strcmp(buffer, "SHUTDOWN") == 0) {
             log_message(log_fp, "Received shutdown signal");
+            printf("MissileSilo: Received shutdown signal\n");
             break;
         }
 
@@ -86,19 +96,20 @@ int main() {
         char log_msg[BUFFER_SIZE];
         snprintf(log_msg, BUFFER_SIZE, "Received: %s", decrypted);
         log_message(log_fp, log_msg);
+        printf("MissileSilo: %s\n", log_msg);
 
         // Process launch command
         if (strstr(decrypted, "LAUNCH:TARGET_AIR")) {
             log_message(log_fp, "Launch command verified for air target. Initiating countdown...");
-            printf("Missile Silo: Launch command received for air target.\n");
+            printf("MissileSilo: Launch command verified for air target. Initiating countdown...\n");
             for (int i = 10; i >= 0; i--) {
-                printf("\rMissile Silo: Launch in %d seconds", i);
+                printf("\rMissileSilo: Launch in %d seconds", i);
                 fflush(stdout);
                 snprintf(log_msg, BUFFER_SIZE, "Launch in %d seconds", i);
                 log_message(log_fp, log_msg);
                 sleep(1);
             }
-            printf("\rMissile Silo: Missile launched to air target!        \n");
+            printf("\rMissileSilo: Missile launched to air target!        \n");
             log_message(log_fp, "Missile launched to air target!");
         }
     }
@@ -106,7 +117,7 @@ int main() {
     // Cleanup
     fclose(log_fp);
     close(sockfd);
-    printf("Missile Silo: Terminated\n");
+    printf("MissileSilo: Terminated\n");
     return 0;
 }
 

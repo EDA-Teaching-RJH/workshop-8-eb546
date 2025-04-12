@@ -4,11 +4,12 @@
 #include <unistd.h>
 #include <arpa/inet.h>
 #include <time.h>
+#include <errno.h>
 
 #define SERVER_IP "127.0.0.1"
 #define PORT 8080
 #define BUFFER_SIZE 1024
-#define LOG_FILE "satelLite.log"
+#define LOG_FILE "satelite.log"
 
 // Log message
 void log_message(FILE *fp, const char *msg) {
@@ -49,7 +50,7 @@ int main() {
     }
 
     // Send client type
-    char *type = "satelLite";
+    char *type = "satelite";
     if (write(sockfd, type, strlen(type)) < 0) {
         perror("Failed to send client type");
         close(sockfd);
@@ -63,27 +64,33 @@ int main() {
     srand(time(NULL));
     char buffer[BUFFER_SIZE];
     while (1) {
-        if (rand() % 10 < 2) {
+        if (rand() % 10 < 8) { // 80% chance for testing
             char intel[] = "THREAT ---> SPACE ---> ENEMY_SATELLITE ---> Coordinate: 55.7558,37.6173";
             if (write(sockfd, intel, strlen(intel)) < 0) {
-                perror("Failed to send intelligence");
-                log_message(log_fp, "Failed to send intelligence");
-                break;
+                char log_msg[BUFFER_SIZE];
+                snprintf(log_msg, BUFFER_SIZE, "Failed to send intelligence: %s", strerror(errno));
+                log_message(log_fp, log_msg);
+                printf("Satelite: %s\n", log_msg);
+            } else {
+                log_message(log_fp, "Sent intelligence: THREAT ---> SPACE ---> ENEMY_SATELLITE");
+                printf("Satelite: Sent intelligence: THREAT ---> SPACE ---> ENEMY_SATELLITE\n");
             }
-            log_message(log_fp, "Sent intelligence ---> THREAT ---> SPACE ---> ENEMY_SATELLITE");
-            printf("Satelite: Sent intelligence\n");
         }
 
         // Check for server messages
         memset(buffer, 0, BUFFER_SIZE);
         int n = read(sockfd, buffer, BUFFER_SIZE - 1);
         if (n <= 0) {
-            log_message(log_fp, "Disconnected from server");
+            char log_msg[BUFFER_SIZE];
+            snprintf(log_msg, BUFFER_SIZE, "Disconnected from server: %s", n == 0 ? "closed" : strerror(errno));
+            log_message(log_fp, log_msg);
+            printf("Satelite: %s\n", log_msg);
             break;
         }
         buffer[n] = '\0';
         if (strcmp(buffer, "SHUTDOWN") == 0) {
             log_message(log_fp, "Received shutdown signal");
+            printf("Satelite: Received shutdown signal\n");
             break;
         }
 
@@ -93,7 +100,7 @@ int main() {
     // Cleanup
     fclose(log_fp);
     close(sockfd);
-    printf("SatelLite: Terminated\n");
+    printf("Satelite: Terminated\n");
     return 0;
 }
 
