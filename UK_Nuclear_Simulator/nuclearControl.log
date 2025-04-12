@@ -1,7 +1,5 @@
-[Sat Apr 12 19:29:09 2025] Server started
-[Sat Apr 12 19:29:12 2025] Test mode: Simulating THREAT:AIR:ENEMY_AIRCRAFT:51.5074,-0.1278
-[Sat Apr 12 19:29:37 2025] sateliteTHREAT:SPACE:ENEMY_SATELLITE:55.7558,37.6173
-[Sat Apr 12 19:29:42 2025] radar
-[Sat Apr 12 19:30:01 2025] silo
-[Sat Apr 12 19:30:17 2025] submarineTHREAT:SEA:ENEMY_SUB:48.8566,2.3522
-[Sat Apr 12 19:31:40 2025] Sent encrypted launch command to silo
+[Sat Apr 12 20:37:31 2025] Cleared log file: missileSilo.log
+[Sat Apr 12 20:37:31 2025] Cleared log file: submarine.log
+[Sat Apr 12 20:37:31 2025] Cleared log file: radar.log
+[Sat Apr 12 20:37:31 2025] Cleared log file: satelite.log
+[Sat Apr 12 20:37:31 2025] Reopened log file after clearing

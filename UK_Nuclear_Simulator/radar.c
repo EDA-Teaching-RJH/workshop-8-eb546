@@ -32,6 +32,7 @@ int main() {
     int sockfd = socket(AF_INET, SOCK_STREAM, 0);
     if (sockfd < 0) {
         perror("Socket creation failed");
+        fclose(log_fp);
         exit(1);
     }
 
@@ -43,13 +44,20 @@ int main() {
     if (connect(sockfd, (struct sockaddr *)&server_addr, sizeof(server_addr)) < 0) {
         perror("Connection failed");
         close(sockfd);
+        fclose(log_fp);
         exit(1);
     }
 
     // Send client type
     char *type = "radar";
-    write(sockfd, type, strlen(type));
+    if (write(sockfd, type, strlen(type)) < 0) {
+        perror("Failed to send client type");
+        close(sockfd);
+        fclose(log_fp);
+        exit(1);
+    }
     log_message(log_fp, "Connected to nuclearControl");
+    printf("Radar: Connected to nuclearControl\n");
 
     // Simulate sending intelligence
     srand(time(NULL));
@@ -57,8 +65,13 @@ int main() {
     while (1) {
         if (rand() % 10 < 3) {
             char intel[] = "THREAT ---> AIR ---> ENEMY_AIRCRAFT ---> Coordinate: 51.5074,-0.1278";
-            write(sockfd, intel, strlen(intel));
+            if (write(sockfd, intel, strlen(intel)) < 0) {
+                perror("Failed to send intelligence");
+                log_message(log_fp, "Failed to send intelligence");
+                break;
+            }
             log_message(log_fp, "Sent intelligence: THREAT ---> AIR ---> ENEMY_AIRCRAFT");
+            printf("Radar: Sent intelligence\n");
         }
 
         // Check for server messages
@@ -83,4 +96,3 @@ int main() {
     printf("Radar: Terminated\n");
     return 0;
 }
-

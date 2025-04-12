@@ -100,7 +100,7 @@ void *handle_client(void *arg) {
     char buffer[BUFFER_SIZE];
     char *client_type = NULL;
 
-    // Get client type
+    // Get client type from stored clients
     pthread_mutex_lock(&mutex);
     for (int i = 0; i < client_count; i++) {
         if (clients[i].sockfd == sockfd) {
@@ -110,22 +110,36 @@ void *handle_client(void *arg) {
     }
     pthread_mutex_unlock(&mutex);
 
+    if (!client_type) {
+        log_message("Failed to identify client type");
+        close(sockfd);
+        free(arg);
+        return NULL;
+    }
+
     free(arg);
 
     while (!shutdown_flag) {
         memset(buffer, 0, BUFFER_SIZE);
         int n = read(sockfd, buffer, BUFFER_SIZE - 1);
-        if (n <= 0) {
+        if (n < 0) {
             char log_msg[BUFFER_SIZE];
-            snprintf(log_msg, BUFFER_SIZE, "%s disconnected", client_type ? client_type : "unknown");
+            snprintf(log_msg, BUFFER_SIZE, "Error reading from %s", client_type);
+            log_message(log_msg);
+            break;
+        }
+        if (n == 0) {
+            char log_msg[BUFFER_SIZE];
+            snprintf(log_msg, BUFFER_SIZE, "%s disconnected", client_type);
             log_message(log_msg);
             break;
         }
 
         buffer[n] = '\0';
         char log_msg[BUFFER_SIZE];
-        snprintf(log_msg, BUFFER_SIZE, "Received from %s: %s", client_type ? client_type : "unknown", buffer);
+        snprintf(log_msg, BUFFER_SIZE, "Received from %s: %s", client_type, buffer);
         log_message(log_msg);
+        printf("NuclearControl: %s\n", log_msg);
 
         // Store threat for menu
         if (strstr(buffer, "THREAT")) {
@@ -214,10 +228,15 @@ void *menu_system(void *arg) {
                 for (int i = 0; i < client_count; i++) {
                     if ((asset == 1 && strstr(clients[i].type, "silo")) ||
                         (asset == 2 && strstr(clients[i].type, "submarine"))) {
-                        write(clients[i].sockfd, encrypted, enc_len);
-                        char log_msg[BUFFER_SIZE];
-                        snprintf(log_msg, BUFFER_SIZE, "Sent encrypted launch command to %s", clients[i].type);
-                        log_message(log_msg);
+                        if (write(clients[i].sockfd, encrypted, enc_len) < 0) {
+                            char log_msg[BUFFER_SIZE];
+                            snprintf(log_msg, BUFFER_SIZE, "Failed to send launch command to %s", clients[i].type);
+                            log_message(log_msg);
+                        } else {
+                            char log_msg[BUFFER_SIZE];
+                            snprintf(log_msg, BUFFER_SIZE, "Sent encrypted launch command to %s", clients[i].type);
+                            log_message(log_msg);
+                        }
                     }
                 }
                 pthread_mutex_unlock(&mutex);
@@ -296,6 +315,7 @@ int main(int argc, char *argv[]) {
     }
 
     log_message("Server started");
+    printf("NuclearControl: Server started\n");
 
     // Start menu system
     pthread_t menu_thread;
@@ -318,6 +338,7 @@ int main(int argc, char *argv[]) {
         char log_msg[BUFFER_SIZE];
         snprintf(log_msg, BUFFER_SIZE, "Test mode: Simulating %s", threat);
         log_message(log_msg);
+        printf("NuclearControl: %s\n", log_msg);
 
         strncpy(last_threat, threat, BUFFER_SIZE - 1);
     }
@@ -338,6 +359,9 @@ int main(int argc, char *argv[]) {
         char buffer[BUFFER_SIZE] = {0};
         int n = read(*client_fd, buffer, BUFFER_SIZE - 1);
         if (n <= 0) {
+            char log_msg[BUFFER_SIZE];
+            snprintf(log_msg, BUFFER_SIZE, "Failed to read client type for socket %d", *client_fd);
+            log_message(log_msg);
             close(*client_fd);
             free(client_fd);
             continue;
@@ -346,6 +370,7 @@ int main(int argc, char *argv[]) {
         char log_msg[BUFFER_SIZE];
         snprintf(log_msg, BUFFER_SIZE, "New client connected: %s", buffer);
         log_message(log_msg);
+        printf("NuclearControl: %s\n", log_msg);
 
         pthread_mutex_lock(&mutex);
         if (client_count < MAX_CLIENTS) {
@@ -354,6 +379,7 @@ int main(int argc, char *argv[]) {
             client_count++;
         } else {
             log_message("Max clients reached");
+            printf("NuclearControl: Max clients reached\n");
             close(*client_fd);
             free(client_fd);
             pthread_mutex_unlock(&mutex);
