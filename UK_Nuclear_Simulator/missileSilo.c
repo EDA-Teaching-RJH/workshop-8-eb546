@@ -92,13 +92,14 @@ int main() {
             log_message(log_fp, "Launch command verified for air target. Initiating countdown...");
             printf("Missile Silo: Launch command received for air target.\n");
             for (int i = 10; i >= 0; i--) {
+                printf("\rMissile Silo: Launch in %d seconds", i);
+                fflush(stdout);
                 snprintf(log_msg, BUFFER_SIZE, "Launch in %d seconds", i);
                 log_message(log_fp, log_msg);
-                printf("Missile Silo: Launch in %d seconds\n", i);
                 sleep(1);
             }
-            log_message(log_fp, "Missile launched to air target");
-            printf("Missile Silo: Missile launched to air target\n");
+            printf("\rMissile Silo: Missile launched to air target!        \n");
+            log_message(log_fp, "Missile launched to air target!");
         }
     }
 

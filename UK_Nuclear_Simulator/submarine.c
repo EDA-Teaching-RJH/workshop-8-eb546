@@ -68,9 +68,9 @@ int main() {
     while (1) {
         // Randomly send intelligence
         if (rand() % 10 < 2) {
-            char intel[] = "THREAT:SEA:ENEMY_SUB:48.8566,2.3522";
+            char intel[] = "THREAT ---> SEA ---> ENEMY_SUB ---> Coordinates: 48.8566,2.3522";
             write(sockfd, intel, strlen(intel));
-            log_message(log_fp, "Sent intelligence: THREAT:SEA:ENEMY_SUB");
+            log_message(log_fp, "Sent intelligence: THREAT ---> SEA ---> ENEMY_SUB");
         }
 
         // Listen for commands
@@ -98,16 +98,17 @@ int main() {
 
         // Process launch command
         if (strstr(decrypted, "LAUNCH:TARGET_SEA_SPACE")) {
-            log_message(log_fp, "Launch command verified for sea/space target. Initiating countdown...");
+            log_message(log_fp, "Launch command verified for SEA/SPACE target. Initiating countdown...");
             printf("Submarine: Launch command received for sea/space target.\n");
             for (int i = 10; i >= 0; i--) {
+                printf("\rSubmarine: Launch in %d seconds", i);
+                fflush(stdout);
                 snprintf(log_msg, BUFFER_SIZE, "Launch in %d seconds", i);
                 log_message(log_fp, log_msg);
-                printf("Submarine: Launch in %d seconds\n", i);
                 sleep(1);
             }
-            log_message(log_fp, "Missile launched to sea/space target");
-            printf("Submarine: Missile launched to sea/space target\n");
+            printf("\rSubmarine: Missile launched to sea/space target!        \n");
+            log_message(log_fp, "Missile launched to SEA/SPACE target!");
         }
 
         sleep(5);

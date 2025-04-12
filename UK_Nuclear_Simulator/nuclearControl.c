@@ -62,23 +62,69 @@ void log_message(const char *msg) {
     fflush(log_fp);
 }
 
+// Clear all log files
+void clear_logs() {
+    const char *log_files[] = {"nuclearControl.log", "missileSilo.log", "submarine.log", "radar.log", "satelite.log"};
+    int num_files = 5;
+
+    for (int i = 0; i < num_files; i++) {
+        FILE *fp = fopen(log_files[i], "w");
+        if (fp) {
+            fclose(fp);
+            chmod(log_files[i], 0600);
+            char log_msg[BUFFER_SIZE];
+            snprintf(log_msg, BUFFER_SIZE, "Cleared log file: %s", log_files[i]);
+            if (strcmp(log_files[i], LOG_FILE) != 0) log_message(log_msg);
+            printf("Cleared %s\n", log_files[i]);
+        } else {
+            char log_msg[BUFFER_SIZE];
+            snprintf(log_msg, BUFFER_SIZE, "Failed to clear log file: %s", log_files[i]);
+            if (strcmp(log_files[i], LOG_FILE) != 0) log_message(log_msg);
+            printf("Failed to clear %s\n", log_files[i]);
+        }
+    }
+    // Reopen nuclearControl.log
+    log_fp = fopen(LOG_FILE, "a");
+    if (!log_fp) {
+        perror("Failed to reopen log file");
+        shutdown_flag = 1;
+    } else {
+        chmod(LOG_FILE, 0600);
+        log_message("Reopened log file after clearing");
+    }
+}
+
 // Handle client communication
 void *handle_client(void *arg) {
     int sockfd = *(int *)arg;
     char buffer[BUFFER_SIZE];
+    char *client_type = NULL;
+
+    // Get client type
+    pthread_mutex_lock(&mutex);
+    for (int i = 0; i < client_count; i++) {
+        if (clients[i].sockfd == sockfd) {
+            client_type = strdup(clients[i].type);
+            break;
+        }
+    }
+    pthread_mutex_unlock(&mutex);
+
     free(arg);
 
     while (!shutdown_flag) {
         memset(buffer, 0, BUFFER_SIZE);
         int n = read(sockfd, buffer, BUFFER_SIZE - 1);
         if (n <= 0) {
-            log_message("Client disconnected");
+            char log_msg[BUFFER_SIZE];
+            snprintf(log_msg, BUFFER_SIZE, "%s disconnected", client_type ? client_type : "unknown");
+            log_message(log_msg);
             break;
         }
 
         buffer[n] = '\0';
         char log_msg[BUFFER_SIZE];
-        snprintf(log_msg, BUFFER_SIZE, "Received: %s", buffer);
+        snprintf(log_msg, BUFFER_SIZE, "Received from %s: %s", client_type ? client_type : "unknown", buffer);
         log_message(log_msg);
 
         // Store threat for menu
@@ -99,6 +145,7 @@ void *handle_client(void *arg) {
         }
     }
     pthread_mutex_unlock(&mutex);
+    free(client_type);
     return NULL;
 }
 
@@ -110,6 +157,7 @@ void *menu_system(void *arg) {
         printf("1. View and decrypt log messages\n");
         printf("2. Decide launch based on last threat\n");
         printf("3. Exit\n");
+        printf("4. Clear all logs\n");
         printf("Enter choice: ");
         if (!fgets(input, sizeof(input), stdin)) continue;
 
@@ -123,7 +171,11 @@ void *menu_system(void *arg) {
                 }
                 char line[BUFFER_SIZE];
                 while (fgets(line, BUFFER_SIZE, temp_fp)) {
-                    printf("%s", line);
+                    if (strstr(line, "Sent encrypted launch command")) {
+                        printf("Decrypted log: %s", line);
+                    } else {
+                        printf("%s", line);
+                    }
                 }
                 fclose(temp_fp);
                 break;
@@ -150,7 +202,7 @@ void *menu_system(void *arg) {
                 } else if (asset == 2 && (strstr(last_threat, "SEA") || strstr(last_threat, "SPACE"))) {
                     snprintf(launch_cmd, BUFFER_SIZE, "LAUNCH:TARGET_SEA_SPACE");
                 } else {
-                    printf("Invalid asset for this threat\n");
+                    printf("Invalid asset for this threat!\n");
                     break;
                 }
 
@@ -189,6 +241,11 @@ void *menu_system(void *arg) {
                 fclose(log_fp);
                 pthread_exit(NULL);
             }
+            case 4: {
+                clear_logs();
+                printf("All logs cleared\n");
+                break;
+            }
             default:
                 printf("Invalid choice\n");
         }
@@ -206,7 +263,7 @@ int main(int argc, char *argv[]) {
     // Initialize logging
     log_fp = fopen(LOG_FILE, "a");
     if (!log_fp) {
-        perror("Failed to open log file");
+        perror("Failed to open log file!");
         exit(1);
     }
     chmod(LOG_FILE, 0600);
@@ -217,7 +274,7 @@ int main(int argc, char *argv[]) {
     // Setup server socket
     int server_fd = socket(AF_INET, SOCK_STREAM, 0);
     if (server_fd < 0) {
-        perror("Socket creation failed");
+        perror("Socket creation failed!");
         exit(1);
     }
 
@@ -227,13 +284,13 @@ int main(int argc, char *argv[]) {
     server_addr.sin_port = htons(PORT);
 
     if (bind(server_fd, (struct sockaddr *)&server_addr, sizeof(server_addr)) < 0) {
-        perror("Bind failed");
+        perror("Bind failed!");
         close(server_fd);
         exit(1);
     }
 
     if (listen(server_fd, 10) < 0) {
-        perror("Listen failed");
+        perror("Listen failed!");
         close(server_fd);
         exit(1);
     }
@@ -243,7 +300,7 @@ int main(int argc, char *argv[]) {
     // Start menu system
     pthread_t menu_thread;
     if (pthread_create(&menu_thread, NULL, menu_system, NULL) != 0) {
-        perror("Menu thread creation failed");
+        perror("Menu thread creation failed!");
         close(server_fd);
         exit(1);
     }
@@ -254,9 +311,9 @@ int main(int argc, char *argv[]) {
         char threat[BUFFER_SIZE];
         int type = rand() % 2;
         if (type == 0) {
-            snprintf(threat, BUFFER_SIZE, "THREAT:AIR:ENEMY_AIRCRAFT:51.5074,-0.1278");
+            snprintf(threat, BUFFER_SIZE, "THREAT ---> AIR ---> ENEMY_AIRCRAFT: Coordinate: 51.5074,-0.1278");
         } else {
-            snprintf(threat, BUFFER_SIZE, "THREAT:SEA:ENEMY_SUB:48.8566,2.3522");
+            snprintf(threat, BUFFER_SIZE, "THREAT ---> SEA ---> ENEMY_SUB: Coordinate: 48.8566,2.3522");
         }
         char log_msg[BUFFER_SIZE];
         snprintf(log_msg, BUFFER_SIZE, "Test mode: Simulating %s", threat);
@@ -279,8 +336,16 @@ int main(int argc, char *argv[]) {
 
         // Receive client type
         char buffer[BUFFER_SIZE] = {0};
-        read(*client_fd, buffer, BUFFER_SIZE - 1);
-        log_message(buffer);
+        int n = read(*client_fd, buffer, BUFFER_SIZE - 1);
+        if (n <= 0) {
+            close(*client_fd);
+            free(client_fd);
+            continue;
+        }
+        buffer[n] = '\0';
+        char log_msg[BUFFER_SIZE];
+        snprintf(log_msg, BUFFER_SIZE, "New client connected: %s", buffer);
+        log_message(log_msg);
 
         pthread_mutex_lock(&mutex);
         if (client_count < MAX_CLIENTS) {
@@ -311,3 +376,4 @@ int main(int argc, char *argv[]) {
     pthread_join(menu_thread, NULL);
     return 0;
 }
+

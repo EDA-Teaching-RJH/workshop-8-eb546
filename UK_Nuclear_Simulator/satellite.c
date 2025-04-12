@@ -56,9 +56,9 @@ int main() {
     char buffer[BUFFER_SIZE];
     while (1) {
         if (rand() % 10 < 2) {
-            char intel[] = "THREAT:SPACE:ENEMY_SATELLITE:55.7558,37.6173";
+            char intel[] = "THREAT ---> SPACE ---> ENEMY_SATELLITE ---> Coordinate: 55.7558,37.6173";
             write(sockfd, intel, strlen(intel));
-            log_message(log_fp, "Sent intelligence: THREAT:SPACE:ENEMY_SATELLITE");
+            log_message(log_fp, "Sent intelligence ---> THREAT ---> SPACE ---> ENEMY_SATELLITE");
         }
 
         // Check for server messages
@@ -83,4 +83,3 @@ int main() {
     printf("Satelite: Terminated\n");
     return 0;
 }
-
