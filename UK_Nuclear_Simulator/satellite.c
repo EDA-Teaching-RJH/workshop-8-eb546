@@ -55,7 +55,7 @@ int main() {
     srand(time(NULL));
     char buffer[BUFFER_SIZE];
     while (1) {
-        if (rand() % 10 < 2) {
+        if (rand() % 10 < 5) {
             char intel[] = "THREAT:SPACE:ENEMY_SATELLITE:55.7558,37.6173\n";
             write(sockfd, intel, strlen(intel));
             log_message(log_fp, "Sent intelligence: THREAT:SPACE:ENEMY_SATELLITE\n");
@@ -74,7 +74,7 @@ int main() {
             break;
         }
 
-        sleep(15);
+        sleep(10);
     }
 
     // Cleanup

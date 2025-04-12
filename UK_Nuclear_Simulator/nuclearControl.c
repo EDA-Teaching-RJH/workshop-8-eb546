@@ -314,7 +314,7 @@ int main(int argc, char *argv[]) {
     }
 
     log_message("Server started");
-    printf("NuclearControl: Server started\n");
+    printf("\nNuclearControl: Server started\n");
 
     // Start menu system
     pthread_t menu_thread;
@@ -365,7 +365,7 @@ int main(int argc, char *argv[]) {
         }
         buffer[n] = '\0';
         char log_msg[BUFFER_SIZE];
-        snprintf(log_msg, BUFFER_SIZE, "New client connected: %s", buffer);
+        snprintf(log_msg, BUFFER_SIZE, "New client connected: %s\n", buffer);
         log_message(log_msg);
         printf("NuclearControl: New client connected: %s\n", buffer);
 

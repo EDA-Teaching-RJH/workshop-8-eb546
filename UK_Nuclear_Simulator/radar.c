@@ -55,7 +55,7 @@ int main() {
     srand(time(NULL));
     char buffer[BUFFER_SIZE];
     while (1) {
-        if (rand() % 10 < 3) {
+        if (rand() % 10 < 5) {
             char intel[] = "THREAT:AIR:ENEMY_AIRCRAFT:51.5074,-0.1278\n";
             write(sockfd, intel, strlen(intel));
             log_message(log_fp, "Sent intelligence: THREAT:AIR:ENEMY_AIRCRAFT\n");
