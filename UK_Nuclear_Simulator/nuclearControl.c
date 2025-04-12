@@ -157,8 +157,8 @@ void *menu_system(void *arg) {
         printf("\nNuclear Control Menu:\n");
         printf("1. View recent messages\n");
         printf("2. Decide launch based on last threat\n");
-        printf("3. Exit\n");
-        printf("4. Clear all logs\n");
+        printf("3. Clear all logs\n");
+        printf("4. Exit\n");
         printf("Enter choice: ");
         if (!fgets(input, sizeof(input), stdin)) continue;
 
@@ -231,6 +231,20 @@ void *menu_system(void *arg) {
                 break;
             }
             case 3: {
+                clear_logs();
+                printf("All logs cleared\n");
+                // Reopen nuclearControl.log for further logging
+                log_fp = fopen(LOG_FILE, "a");
+                if (!log_fp) {
+                    perror("Failed to reopen log file");
+                    shutdown_flag = 1;
+                    pthread_exit(NULL);
+                }
+                chmod(LOG_FILE, 0600);
+                log_message("Reopened log file after clearing");
+                break;
+            }
+            case 4: {
                 printf("Shutting down system\n");
                 shutdown_flag = 1;
 
@@ -249,20 +263,6 @@ void *menu_system(void *arg) {
                 // Close log file
                 fclose(log_fp);
                 pthread_exit(NULL);
-            }
-            case 4: {
-                clear_logs();
-                printf("All logs cleared\n");
-                // Reopen nuclearControl.log for further logging
-                log_fp = fopen(LOG_FILE, "a");
-                if (!log_fp) {
-                    perror("Failed to reopen log file");
-                    shutdown_flag = 1;
-                    pthread_exit(NULL);
-                }
-                chmod(LOG_FILE, 0600);
-                log_message("Reopened log file after clearing");
-                break;
             }
             default:
                 printf("Invalid choice\n");

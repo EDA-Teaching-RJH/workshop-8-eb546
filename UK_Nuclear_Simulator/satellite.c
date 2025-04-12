@@ -56,9 +56,9 @@ int main() {
     char buffer[BUFFER_SIZE];
     while (1) {
         if (rand() % 10 < 2) {
-            char intel[] = "\nTHREAT:SPACE:ENEMY_SATELLITE:55.7558,37.6173\n";
+            char intel[] = "THREAT:SPACE:ENEMY_SATELLITE:55.7558,37.6173\n";
             write(sockfd, intel, strlen(intel));
-            log_message(log_fp, "\nSent intelligence: THREAT:SPACE:ENEMY_SATELLITE\n");
+            log_message(log_fp, "Sent intelligence: THREAT:SPACE:ENEMY_SATELLITE\n");
         }
 
         // Check for server messages
