@@ -188,7 +188,7 @@ void *menu_system(void *arg) {
                     printf("No threat detected yet\n");
                     break;
                 }
-                printf("Last threat: %s\n", last_threat);
+                printf("\nLast threat: %s\n", last_threat);
                 printf("Select launch asset:\n");
                 printf("1. Missile Silo\n");
                 printf("2. Submarine\n");
@@ -330,14 +330,14 @@ int main(int argc, char *argv[]) {
         char threat[BUFFER_SIZE];
         int type = rand() % 2;
         if (type == 0) {
-            snprintf(threat, BUFFER_SIZE, "THREAT:AIR:ENEMY_AIRCRAFT:51.5074,-0.1278");
+            snprintf(threat, BUFFER_SIZE, "\nTHREAT:AIR:ENEMY_AIRCRAFT:51.5074,-0.1278");
         } else {
-            snprintf(threat, BUFFER_SIZE, "THREAT:SEA:ENEMY_SUB:48.8566,2.3522");
+            snprintf(threat, BUFFER_SIZE, "\nTHREAT:SEA:ENEMY_SUB:48.8566,2.3522");
         }
         char log_msg[BUFFER_SIZE];
-        snprintf(log_msg, BUFFER_SIZE, "Test mode: Simulating %s", threat);
+        snprintf(log_msg, BUFFER_SIZE, "\nTest mode: Simulating %s", threat);
         log_message(log_msg);
-        printf("NuclearControl: Test mode: Simulating %s\n", threat);
+        printf("\nNuclearControl: Test mode: Simulating %s\n", threat);
 
         strncpy(last_threat, threat, BUFFER_SIZE - 1);
     }
