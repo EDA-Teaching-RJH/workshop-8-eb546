@@ -12,9 +12,8 @@
 #define PORT 8080
 #define MAX_CLIENTS 4
 #define BUFFER_SIZE 1024
-#define KEY "0123456789abcdef0123456789abcdef"
+#define KEY "0123456789abcdef0123456789abcdef" // 32-byte AES-256 key
 #define LOG_FILE "nuclearControl.log"
-#define LOG_FILES {"nuclearControl.log", "missileSilo.log", "submarine.log", "radar.log", "satellite.log"}
 
 // Structure for client info
 typedef struct {
@@ -28,7 +27,6 @@ int client_count = 0;
 pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
 FILE *log_fp = NULL;
 char last_threat[BUFFER_SIZE] = {0};
-int shutdown_flag = 0;
 
 // Encrypt message using AES-256
 void encrypt_message(const char *input, char *output, int *out_len) {
@@ -63,70 +61,24 @@ void log_message(const char *msg) {
     fflush(log_fp);
 }
 
-// Clear all log files
-void clear_logs() {
-    const char *log_files[] = {"nuclearControl.log", "missileSilo.log", "submarine.log", "radar.log", "satellite.log"};
-    int num_files = 5;
-
-    for (int i = 0; i < num_files; i++) {
-        FILE *fp = fopen(log_files[i], "w"); // Truncate file
-        if (fp) {
-            fclose(fp);
-            chmod(log_files[i], 0600); // Restore permissions
-            char log_msg[BUFFER_SIZE];
-            snprintf(log_msg, BUFFER_SIZE, "Cleared log file: %s", log_files[i]);
-            log_message(log_msg);
-            printf("NuclearControl: Cleared %s\n", log_files[i]);
-        } else {
-            char log_msg[BUFFER_SIZE];
-            snprintf(log_msg, BUFFER_SIZE, "Failed to clear log file: %s", log_files[i]);
-            log_message(log_msg);
-            printf("NuclearControl: Failed to clear %s\n", log_files[i]);
-        }
-    }
-}
-
 // Handle client communication
 void *handle_client(void *arg) {
     int sockfd = *(int *)arg;
     char buffer[BUFFER_SIZE];
-    char *client_type = NULL;
-
-    // Get client type
-    pthread_mutex_lock(&mutex);
-    for (int i = 0; i < client_count; i++) {
-        if (clients[i].sockfd == sockfd) {
-            client_type = strdup(clients[i].type);
-            break;
-        }
-    }
-    pthread_mutex_unlock(&mutex);
-
     free(arg);
 
-    while (!shutdown_flag) {
+    while (1) {
         memset(buffer, 0, BUFFER_SIZE);
         int n = read(sockfd, buffer, BUFFER_SIZE - 1);
-        if (n < 0) {
-            perror("Read error");
-            char log_msg[BUFFER_SIZE];
-            snprintf(log_msg, BUFFER_SIZE, "Read error from %s", client_type ? client_type : "unknown");
-            log_message(log_msg);
-            break;
-        }
-        if (n == 0) {
-            char log_msg[BUFFER_SIZE];
-            snprintf(log_msg, BUFFER_SIZE, "%s disconnected", client_type ? client_type : "unknown");
-            log_message(log_msg);
-            printf("NuclearControl: %s disconnected\n", client_type ? client_type : "unknown");
+        if (n <= 0) {
+            log_message("Client disconnected");
             break;
         }
 
         buffer[n] = '\0';
         char log_msg[BUFFER_SIZE];
-        snprintf(log_msg, BUFFER_SIZE, "Received from %s: %s", client_type ? client_type : "unknown", buffer);
+        snprintf(log_msg, BUFFER_SIZE, "Received: %s", buffer);
         log_message(log_msg);
-        printf("NuclearControl: Received from %s: %s\n", client_type ? client_type : "unknown", buffer);
 
         // Store threat for menu
         if (strstr(buffer, "THREAT")) {
@@ -146,39 +98,37 @@ void *handle_client(void *arg) {
         }
     }
     pthread_mutex_unlock(&mutex);
-    free(client_type);
     return NULL;
 }
 
 // Menu system for user interaction
 void *menu_system(void *arg) {
     char input[10];
-    while (!shutdown_flag) {
+    while (1) {
         printf("\nNuclear Control Menu:\n");
-        printf("1. View recent messages\n");
+        printf("1. View and decrypt log messages\n");
         printf("2. Decide launch based on last threat\n");
-        printf("3. Clear all logs\n");
-        printf("4. Exit\n");
-        printf("Enter choice: ");
+        printf("3. Exit\n");
+        printf("Enter choice: \n");
         if (!fgets(input, sizeof(input), stdin)) continue;
 
         int choice = atoi(input);
         switch (choice) {
             case 1: {
+                // Read and decrypt log file
                 FILE *temp_fp = fopen(LOG_FILE, "r");
                 if (!temp_fp) {
                     printf("Failed to open log file\n");
                     break;
                 }
                 char line[BUFFER_SIZE];
-                char lines[5][BUFFER_SIZE];
-                int line_count = 0;
                 while (fgets(line, BUFFER_SIZE, temp_fp)) {
-                    strncpy(lines[line_count % 5], line, BUFFER_SIZE);
-                    line_count++;
-                }
-                for (int i = 0; i < (line_count < 5 ? line_count : 5); i++) {
-                    printf("%s", lines[(line_count - i - 1) % 5]);
+                    if (strstr(line, "Sent encrypted launch command")) {
+                        // Simulate decryption (log plaintext for simplicity)
+                        printf("Decrypted log: %s", line);
+                    } else {
+                        printf("%s", line);
+                    }
                 }
                 fclose(temp_fp);
                 break;
@@ -188,7 +138,7 @@ void *menu_system(void *arg) {
                     printf("No threat detected yet\n");
                     break;
                 }
-                printf("\nLast threat: %s\n", last_threat);
+                printf("Last threat: %s\n", last_threat);
                 printf("Select launch asset:\n");
                 printf("1. Missile Silo\n");
                 printf("2. Submarine\n");
@@ -203,9 +153,9 @@ void *menu_system(void *arg) {
                 if (asset == 1 && strstr(last_threat, "AIR")) {
                     snprintf(launch_cmd, BUFFER_SIZE, "LAUNCH:TARGET_AIR");
                 } else if (asset == 2 && (strstr(last_threat, "SEA") || strstr(last_threat, "SPACE"))) {
-                    snprintf(launch_cmd, BUFFER_SIZE, "LAUNCH:TARGET_SEA_SPACE");
+                    snprintf(launch_cmd, BUFFER_SIZE, "LAUNCH ---> TARGET_SEA_SPACE");
                 } else {
-                    printf("Invalid asset for this threat\n");
+                    printf("Invalid asset for this threat!\n");
                     break;
                 }
 
@@ -217,53 +167,18 @@ void *menu_system(void *arg) {
                 for (int i = 0; i < client_count; i++) {
                     if ((asset == 1 && strstr(clients[i].type, "silo")) ||
                         (asset == 2 && strstr(clients[i].type, "submarine"))) {
-                        if (write(clients[i].sockfd, encrypted, enc_len) < 0) {
-                            perror("Failed to send launch command");
-                        } else {
-                            char log_msg[BUFFER_SIZE];
-                            snprintf(log_msg, BUFFER_SIZE, "Sent encrypted launch command to %s", clients[i].type);
-                            log_message(log_msg);
-                            printf("NuclearControl: Sent launch command to %s\n", clients[i].type);
-                        }
+                        write(clients[i].sockfd, encrypted, enc_len);
+                        char log_msg[BUFFER_SIZE];
+                        snprintf(log_msg, BUFFER_SIZE, "Sent encrypted launch command to %s", clients[i].type);
+                        log_message(log_msg);
                     }
                 }
                 pthread_mutex_unlock(&mutex);
                 break;
             }
-            case 3: {
-                clear_logs();
-                printf("All logs cleared\n");
-                // Reopen nuclearControl.log for further logging
-                log_fp = fopen(LOG_FILE, "a");
-                if (!log_fp) {
-                    perror("Failed to reopen log file");
-                    shutdown_flag = 1;
-                    pthread_exit(NULL);
-                }
-                chmod(LOG_FILE, 0600);
-                log_message("Reopened log file after clearing");
-                break;
-            }
-            case 4: {
-                printf("Shutting down system\n");
-                shutdown_flag = 1;
-
-                // Send shutdown signal to all clients
-                pthread_mutex_lock(&mutex);
-                for (int i = 0; i < client_count; i++) {
-                    if (write(clients[i].sockfd, "SHUTDOWN", strlen("SHUTDOWN")) < 0) {
-                        perror("Failed to send shutdown signal");
-                    }
-                    close(clients[i].sockfd);
-                    free(clients[i].type);
-                }
-                client_count = 0;
-                pthread_mutex_unlock(&mutex);
-
-                // Close log file
-                fclose(log_fp);
-                pthread_exit(NULL);
-            }
+            case 3:
+                printf("Exiting menu\n");
+                return NULL;
             default:
                 printf("Invalid choice\n");
         }
@@ -281,7 +196,7 @@ int main(int argc, char *argv[]) {
     // Initialize logging
     log_fp = fopen(LOG_FILE, "a");
     if (!log_fp) {
-        perror("Failed to open log file");
+        perror("Failed to open log file!");
         exit(1);
     }
     chmod(LOG_FILE, 0600);
@@ -292,7 +207,7 @@ int main(int argc, char *argv[]) {
     // Setup server socket
     int server_fd = socket(AF_INET, SOCK_STREAM, 0);
     if (server_fd < 0) {
-        perror("Socket creation failed");
+        perror("Socket creation failed!");
         exit(1);
     }
 
@@ -302,72 +217,61 @@ int main(int argc, char *argv[]) {
     server_addr.sin_port = htons(PORT);
 
     if (bind(server_fd, (struct sockaddr *)&server_addr, sizeof(server_addr)) < 0) {
-        perror("Bind failed");
+        perror("Bind failed!");
         close(server_fd);
         exit(1);
     }
 
     if (listen(server_fd, 10) < 0) {
-        perror("Listen failed");
+        perror("Listen failed!");
         close(server_fd);
         exit(1);
     }
 
     log_message("Server started");
-    printf("\nNuclearControl: Server started\n");
 
     // Start menu system
     pthread_t menu_thread;
     if (pthread_create(&menu_thread, NULL, menu_system, NULL) != 0) {
-        perror("Menu thread creation failed");
+        perror("Menu thread creation failed!");
         close(server_fd);
         exit(1);
     }
+    pthread_detach(menu_thread);
 
     // Test mode: Simulate threat
     if (test_mode) {
-        sleep(3);
+        sleep(3); // Reduced to 3 seconds
         char threat[BUFFER_SIZE];
         int type = rand() % 2;
         if (type == 0) {
-            snprintf(threat, BUFFER_SIZE, "\nTHREAT:AIR:ENEMY_AIRCRAFT:51.5074,-0.1278");
+            snprintf(threat, BUFFER_SIZE, "THREAT ---> AIR ---> ENEMY_AIRCRAFT: Coordinate: 51.5074,-0.1278");
         } else {
-            snprintf(threat, BUFFER_SIZE, "\nTHREAT:SEA:ENEMY_SUB:48.8566,2.3522");
+            snprintf(threat, BUFFER_SIZE, "THREAT ---> SEA ---> ENEMY_SUB: Coordinate: 48.8566,2.3522");
         }
         char log_msg[BUFFER_SIZE];
-        snprintf(log_msg, BUFFER_SIZE, "\nTest mode: Simulating %s", threat);
+        snprintf(log_msg, BUFFER_SIZE, "Test mode: Simulating %s\n", threat);
         log_message(log_msg);
-        printf("\nNuclearControl: Test mode: Simulating %s\n", threat);
 
         strncpy(last_threat, threat, BUFFER_SIZE - 1);
     }
 
     // Accept clients
-    while (!shutdown_flag) {
+    while (1) {
         struct sockaddr_in client_addr;
         socklen_t addr_len = sizeof(client_addr);
         int *client_fd = malloc(sizeof(int));
         *client_fd = accept(server_fd, (struct sockaddr *)&client_addr, &addr_len);
         if (*client_fd < 0) {
-            if (!shutdown_flag) perror("Accept failed");
+            perror("Accept failed");
             free(client_fd);
             continue;
         }
 
         // Receive client type
         char buffer[BUFFER_SIZE] = {0};
-        int n = read(*client_fd, buffer, BUFFER_SIZE - 1);
-        if (n <= 0) {
-            perror("Failed to read client type");
-            close(*client_fd);
-            free(client_fd);
-            continue;
-        }
-        buffer[n] = '\0';
-        char log_msg[BUFFER_SIZE];
-        snprintf(log_msg, BUFFER_SIZE, "New client connected: %s\n", buffer);
-        log_message(log_msg);
-        printf("NuclearControl: New client connected: %s\n", buffer);
+        read(*client_fd, buffer, BUFFER_SIZE - 1);
+        log_message(buffer);
 
         pthread_mutex_lock(&mutex);
         if (client_count < MAX_CLIENTS) {
@@ -376,7 +280,6 @@ int main(int argc, char *argv[]) {
             client_count++;
         } else {
             log_message("Max clients reached");
-            printf("NuclearControl: Max clients reached\n");
             close(*client_fd);
             free(client_fd);
             pthread_mutex_unlock(&mutex);
@@ -395,8 +298,8 @@ int main(int argc, char *argv[]) {
     }
 
     // Cleanup
+    fclose(log_fp);
     close(server_fd);
-    pthread_join(menu_thread, NULL);
     return 0;
 }
 
