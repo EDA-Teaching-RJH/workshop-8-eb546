@@ -8,7 +8,7 @@
 #define SERVER_IP "127.0.0.1"
 #define PORT 8080
 #define BUFFER_SIZE 1024
-#define LOG_FILE "satellite.log"
+#define LOG_FILE "satelite.log"
 
 // Log message
 void log_message(FILE *fp, const char *msg) {
@@ -53,34 +53,18 @@ int main() {
 
     // Simulate sending intelligence
     srand(time(NULL));
-    char buffer[BUFFER_SIZE];
     while (1) {
-        if (rand() % 10 < 5) {
-            char intel[] = "THREAT:SPACE:ENEMY_SATELLITE:55.7558,37.6173\n";
+        if (rand() % 10 < 2) {
+            char intel[] = "THREAT ---> SPACE ---> ENEMY_SATELLITE ---> Coordinate: 55.7558,37.6173";
             write(sockfd, intel, strlen(intel));
-            log_message(log_fp, "Sent intelligence: THREAT:SPACE:ENEMY_SATELLITE\n");
+            log_message(log_fp, "Sent intelligence ---> THREAT ---> SPACE ---> ENEMY_SATELLITE");
         }
-
-        // Check for server messages
-        memset(buffer, 0, BUFFER_SIZE);
-        int n = read(sockfd, buffer, BUFFER_SIZE - 1);
-        if (n <= 0) {
-            log_message(log_fp, "Disconnected from server");
-            break;
-        }
-        buffer[n] = '\0';
-        if (strcmp(buffer, "SHUTDOWN") == 0) {
-            log_message(log_fp, "Received shutdown signal");
-            break;
-        }
-
-        sleep(10);
+        sleep(15);
     }
 
     // Cleanup
     fclose(log_fp);
     close(sockfd);
-    printf("Satelite: Terminated\n");
     return 0;
 }
 

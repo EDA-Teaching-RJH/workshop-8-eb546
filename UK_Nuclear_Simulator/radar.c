@@ -53,34 +53,18 @@ int main() {
 
     // Simulate sending intelligence
     srand(time(NULL));
-    char buffer[BUFFER_SIZE];
     while (1) {
-        if (rand() % 10 < 5) {
-            char intel[] = "THREAT:AIR:ENEMY_AIRCRAFT:51.5074,-0.1278\n";
+        if (rand() % 10 < 3) {
+            char intel[] = "THREAT ---> AIR ---> ENEMY_AIRCRAFT ---> Coordinate: 51.5074,-0.1278";
             write(sockfd, intel, strlen(intel));
-            log_message(log_fp, "Sent intelligence: THREAT:AIR:ENEMY_AIRCRAFT\n");
+            log_message(log_fp, "Sent intelligence: THREAT ---> AIR ---> ENEMY_AIRCRAFT");
         }
-
-        // Check for server messages
-        memset(buffer, 0, BUFFER_SIZE);
-        int n = read(sockfd, buffer, BUFFER_SIZE - 1);
-        if (n <= 0) {
-            log_message(log_fp, "Disconnected from server");
-            break;
-        }
-        buffer[n] = '\0';
-        if (strcmp(buffer, "SHUTDOWN") == 0) {
-            log_message(log_fp, "Received shutdown signal");
-            break;
-        }
-
         sleep(10);
     }
 
     // Cleanup
     fclose(log_fp);
     close(sockfd);
-    printf("Radar: Terminated\n");
     return 0;
 }
 

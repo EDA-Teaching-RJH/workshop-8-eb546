@@ -66,20 +66,18 @@ int main() {
     srand(time(NULL));
     char buffer[BUFFER_SIZE];
     while (1) {
+        // Randomly send intelligence
+        if (rand() % 10 < 2) {
+            char intel[] = "THREAT ---> SEA ---> ENEMY_SUB ---> Coordinates: 48.8566,2.3522";
+            write(sockfd, intel, strlen(intel));
+            log_message(log_fp, "Sent intelligence: THREAT ---> SEA ---> ENEMY_SUB");
+        }
 
         // Listen for commands
         memset(buffer, 0, BUFFER_SIZE);
         int n = read(sockfd, buffer, BUFFER_SIZE);
         if (n <= 0) {
             log_message(log_fp, "Disconnected from server");
-            break;
-        }
-
-        buffer[n] = '\0';
-
-        // Check for shutdown signal
-        if (strcmp(buffer, "SHUTDOWN") == 0) {
-            log_message(log_fp, "Received shutdown signal");
             break;
         }
 
@@ -92,16 +90,13 @@ int main() {
 
         // Process launch command
         if (strstr(decrypted, "LAUNCH:TARGET_SEA_SPACE")) {
-            log_message(log_fp, "Launch command verified for sea/space target. Initiating countdown...");
-            printf("Submarine: Launch command received for sea/space target.\n");
-            for (int i = 10; i >= 0; i--) {
-                snprintf(log_msg, BUFFER_SIZE, "Launch in %d seconds", i);
+            log_message(log_fp, "Launch command verified for SEA/SPACE target. Initiating countdown...\n");
+            for (int i = 15; i >= 0; i--) {
+                snprintf(log_msg, BUFFER_SIZE, "Launch in %d seconds\n", i);
                 log_message(log_fp, log_msg);
-                printf("Submarine: Launch in %d seconds\n", i);
                 sleep(1);
             }
-            log_message(log_fp, "Missile launched to sea/space target");
-            printf("Submarine: Missile launched to sea/space target\n");
+            log_message(log_fp, "Missile launched to SEA/SPACE target!");
         }
 
         sleep(5);
@@ -110,7 +105,6 @@ int main() {
     // Cleanup
     fclose(log_fp);
     close(sockfd);
-    printf("Submarine: Terminated\n");
     return 0;
 }
 
