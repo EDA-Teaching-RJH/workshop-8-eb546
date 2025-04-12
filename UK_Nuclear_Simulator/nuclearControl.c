@@ -14,6 +14,7 @@
 #define BUFFER_SIZE 1024
 #define KEY "0123456789abcdef0123456789abcdef"
 #define LOG_FILE "nuclearControl.log"
+#define LOG_FILES {"nuclearControl.log", "missileSilo.log", "submarine.log", "radar.log", "satelite.log"}
 
 // Structure for client info
 typedef struct {
@@ -62,13 +63,36 @@ void log_message(const char *msg) {
     fflush(log_fp);
 }
 
+// Clear all log files
+void clear_logs() {
+    const char *log_files[] = {"nuclearControl.log", "missileSilo.log", "submarine.log", "radar.log", "satelite.log"};
+    int num_files = 5;
+
+    for (int i = 0; i < num_files; i++) {
+        FILE *fp = fopen(log_files[i], "w"); // Truncate file
+        if (fp) {
+            fclose(fp);
+            chmod(log_files[i], 0600); // Restore permissions
+            char log_msg[BUFFER_SIZE];
+            snprintf(log_msg, BUFFER_SIZE, "Cleared log file: %s", log_files[i]);
+            log_message(log_msg);
+            printf("NuclearControl: Cleared %s\n", log_files[i]);
+        } else {
+            char log_msg[BUFFER_SIZE];
+            snprintf(log_msg, BUFFER_SIZE, "Failed to clear log file: %s", log_files[i]);
+            log_message(log_msg);
+            printf("NuclearControl: Failed to clear %s\n", log_files[i]);
+        }
+    }
+}
+
 // Handle client communication
 void *handle_client(void *arg) {
     int sockfd = *(int *)arg;
     char buffer[BUFFER_SIZE];
     char *client_type = NULL;
 
-    // Get client type (stored in clients array)
+    // Get client type
     pthread_mutex_lock(&mutex);
     for (int i = 0; i < client_count; i++) {
         if (clients[i].sockfd == sockfd) {
@@ -134,6 +158,7 @@ void *menu_system(void *arg) {
         printf("1. View recent messages\n");
         printf("2. Decide launch based on last threat\n");
         printf("3. Exit\n");
+        printf("4. Clear all logs\n");
         printf("Enter choice: ");
         if (!fgets(input, sizeof(input), stdin)) continue;
 
@@ -146,7 +171,6 @@ void *menu_system(void *arg) {
                     break;
                 }
                 char line[BUFFER_SIZE];
-                // Show last 5 lines for simplicity
                 char lines[5][BUFFER_SIZE];
                 int line_count = 0;
                 while (fgets(line, BUFFER_SIZE, temp_fp)) {
@@ -225,6 +249,20 @@ void *menu_system(void *arg) {
                 // Close log file
                 fclose(log_fp);
                 pthread_exit(NULL);
+            }
+            case 4: {
+                clear_logs();
+                printf("All logs cleared\n");
+                // Reopen nuclearControl.log for further logging
+                log_fp = fopen(LOG_FILE, "a");
+                if (!log_fp) {
+                    perror("Failed to reopen log file");
+                    shutdown_flag = 1;
+                    pthread_exit(NULL);
+                }
+                chmod(LOG_FILE, 0600);
+                log_message("Reopened log file after clearing");
+                break;
             }
             default:
                 printf("Invalid choice\n");
