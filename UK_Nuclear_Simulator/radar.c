@@ -135,4 +135,3 @@ int main() {
     printf("Radar: Terminated\n");
     return 0;
 }
-

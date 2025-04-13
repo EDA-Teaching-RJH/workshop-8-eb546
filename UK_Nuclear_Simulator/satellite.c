@@ -64,12 +64,12 @@ int main() {
     }
 
     // Send client type
-    char *type = "satelite";
+    char *type = "satellite";
     if (write(sockfd, type, strlen(type)) < 0) {
         char log_msg[BUFFER_SIZE];
         snprintf(log_msg, BUFFER_SIZE, "Failed to send client type: %s", strerror(errno));
         log_message(log_fp, log_msg);
-        printf("Satelite: %s\n", log_msg);
+        printf("Satellite: %s\n", log_msg);
         close(sockfd);
         fclose(log_fp);
         exit(1);
@@ -97,14 +97,14 @@ int main() {
                     char log_msg[BUFFER_SIZE];
                     snprintf(log_msg, BUFFER_SIZE, "Failed to send intelligence: %s", strerror(errno));
                     log_message(log_fp, log_msg);
-                    printf("Satelite: %s\n", log_msg);
+                    printf("Satellite: %s\n", log_msg);
                     write_retries--;
                     usleep(100000); // 100ms
                 }
             }
             if (!sent) {
                 log_message(log_fp, "Aborted sending intelligence after retries");
-                printf("Satelite: Aborted sending intelligence after retries\n");
+                printf("Satellite: Aborted sending intelligence after retries\n");
                 break;
             }
         }
@@ -135,3 +135,4 @@ int main() {
     printf("Satellite: Terminated\n");
     return 0;
 }
+
