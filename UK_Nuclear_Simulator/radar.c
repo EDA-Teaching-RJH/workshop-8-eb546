@@ -3,25 +3,31 @@
 #include <string.h>
 #include <unistd.h>
 #include <arpa/inet.h>
+#include <sys/socket.h>
+#include <sys/select.h>
+#include <sys/time.h>
 #include <time.h>
 #include <errno.h>
+#include <fcntl.h>
 
 #define SERVER_IP "127.0.0.1"
 #define PORT 8080
 #define BUFFER_SIZE 1024
 #define LOG_FILE "radar.log"
+#define CONNECT_RETRIES 5
+#define CONNECT_RETRY_DELAY 2
 
 // Log message
 void log_message(FILE *fp, const char *msg) {
     time_t now = time(NULL);
-    char *time_str = ctime(&now);
-    time_str[strlen(time_str) - 1] = '\0';
-    fprintf(fp, "[%s] %s\n", time_str, msg);
+    char time_buf[26];
+    ctime_r(&now, time_buf);
+    time_buf[strlen(time_buf) - 1] = '\0';
+    fprintf(fp, "[%s] %s\n", time_buf, msg);
     fflush(fp);
 }
 
 int main() {
-    // Initialize logging
     FILE *log_fp = fopen(LOG_FILE, "a");
     if (!log_fp) {
         perror("Failed to open log file");
@@ -29,109 +35,169 @@ int main() {
     }
     chmod(LOG_FILE, 0600);
 
-    // Setup socket
-    int sockfd = socket(AF_INET, SOCK_STREAM, 0);
-    if (sockfd < 0) {
-        perror("Socket creation failed");
-        fclose(log_fp);
-        exit(1);
-    }
-
-    struct sockaddr_in server_addr = {0};
-    server_addr.sin_family = AF_INET;
-    server_addr.sin_port = htons(PORT);
-    inet_pton(AF_INET, SERVER_IP, &server_addr.sin_addr);
-
-    // Retry connect
-    int connect_retries = 5;
-    while (connect_retries > 0) {
-        if (connect(sockfd, (struct sockaddr *)&server_addr, sizeof(server_addr)) == 0) {
-            break;
-        }
-        char log_msg[BUFFER_SIZE];
-        snprintf(log_msg, BUFFER_SIZE, "Connection failed, retrying (%d left): %s", connect_retries, strerror(errno));
-        log_message(log_fp, log_msg);
-        printf("Radar: %s\n", log_msg);
-        sleep(1);
-        connect_retries--;
-    }
-    if (connect_retries == 0) {
-        log_message(log_fp, "Connection failed after retries");
-        printf("Radar: Connection failed after retries\n");
-        close(sockfd);
-        fclose(log_fp);
-        exit(1);
-    }
-
-    // Send client type
-    char *type = "radar";
-    if (write(sockfd, type, strlen(type)) < 0) {
-        char log_msg[BUFFER_SIZE];
-        snprintf(log_msg, BUFFER_SIZE, "Failed to send client type: %s", strerror(errno));
-        log_message(log_fp, log_msg);
-        printf("Radar: %s\n", log_msg);
-        close(sockfd);
-        fclose(log_fp);
-        exit(1);
-    }
-    log_message(log_fp, "Connected to nuclearControl");
-    printf("Radar: Connected to nuclearControl\n");
-
-    // Simulate sending intelligence
     srand(time(NULL));
-    char buffer[BUFFER_SIZE];
+    int sockfd = -1;
     while (1) {
-        log_message(log_fp, "Checking for threats");
-        printf("Radar: Checking for threats\n");
+        // Setup socket
+        if (sockfd < 0) {
+            sockfd = socket(AF_INET, SOCK_STREAM, 0);
+            if (sockfd < 0) {
+                char log_msg[BUFFER_SIZE];
+                snprintf(log_msg, BUFFER_SIZE, "Socket creation failed: %s", strerror(errno));
+                log_message(log_fp, log_msg);
+                printf("Radar: %s\n", log_msg);
+                fclose(log_fp);
+                exit(1);
+            }
 
-        if (rand() % 10 < 4) { // 20% chance
+            // Set non-blocking
+            if (fcntl(sockfd, F_SETFL, O_NONBLOCK) < 0) {
+                char log_msg[BUFFER_SIZE];
+                snprintf(log_msg, BUFFER_SIZE, "Failed to set socket non-blocking: %s", strerror(errno));
+                log_message(log_fp, log_msg);
+                printf("Radar: %s\n", log_msg);
+                close(sockfd);
+                fclose(log_fp);
+                exit(1);
+            }
+
+            struct sockaddr_in server_addr = {0};
+            server_addr.sin_family = AF_INET;
+            server_addr.sin_port = htons(PORT);
+            inet_pton(AF_INET, SERVER_IP, &server_addr.sin_addr);
+
+            // Connect with retries
+            int retries = CONNECT_RETRIES;
+            while (retries > 0) {
+                if (connect(sockfd, (struct sockaddr *)&server_addr, sizeof(server_addr)) == 0) {
+                    break;
+                }
+                if (errno != EINPROGRESS) {
+                    char log_msg[BUFFER_SIZE];
+                    snprintf(log_msg, BUFFER_SIZE, "Connection failed, retrying (%d left): %s", retries, strerror(errno));
+                    log_message(log_fp, log_msg);
+                    printf("Radar: %s\n", log_msg);
+                    sleep(CONNECT_RETRY_DELAY);
+                    retries--;
+                    continue;
+                }
+                fd_set fdset;
+                FD_ZERO(&fdset);
+                FD_SET(sockfd, &fdset);
+                struct timeval tv = { .tv_sec = 2, .tv_usec = 0 };
+                int sel_ret = select(sockfd + 1, NULL, &fdset, NULL, &tv);
+                if (sel_ret > 0) {
+                    int so_error;
+                    socklen_t len = sizeof(so_error);
+                    getsockopt(sockfd, SOL_SOCKET, SO_ERROR, &so_error, &len);
+                    if (so_error == 0) {
+                        break;
+                    }
+                } else if (sel_ret < 0) {
+                    char log_msg[BUFFER_SIZE];
+                    snprintf(log_msg, BUFFER_SIZE, "Select failed: %s", strerror(errno));
+                    log_message(log_fp, log_msg);
+                    printf("Radar: %s\n", log_msg);
+                }
+                retries--;
+                sleep(CONNECT_RETRY_DELAY);
+            }
+            if (retries == 0) {
+                log_message(log_fp, "Connection failed after retries");
+                printf("Radar: Connection failed after retries\n");
+                close(sockfd);
+                sockfd = -1;
+                sleep(10);
+                continue;
+            }
+
+            // Send client type
+            char *type = "radar";
+            int write_retries = 3;
+            while (write_retries > 0) {
+                if (write(sockfd, type, strlen(type)) >= 0) {
+                    break;
+                }
+                if (errno != EAGAIN && errno != EWOULDBLOCK) {
+                    char log_msg[BUFFER_SIZE];
+                    snprintf(log_msg, BUFFER_SIZE, "Failed to send client type: %s", strerror(errno));
+                    log_message(log_fp, log_msg);
+                    printf("Radar: %s\n", log_msg);
+                    close(sockfd);
+                    sockfd = -1;
+                    break;
+                }
+                write_retries--;
+                usleep(100000);
+            }
+            if (write_retries == 0 || sockfd < 0) {
+                if (sockfd >= 0) close(sockfd);
+                sockfd = -1;
+                continue;
+            }
+            log_message(log_fp, "Connected to nuclearControl");
+            printf("Radar: Connected to nuclearControl\n");
+        }
+
+        // Send intelligence
+        if ((rand() % 100) < 10) { // 10% chance
             char intel[] = "THREAT ---> AIR ---> ENEMY_AIRCRAFT ---> Coordinate: 51.5074,-0.1278";
             int write_retries = 3;
-            int sent = 0;
-            while (write_retries > 0 && !sent) {
-                if (write(sockfd, intel, strlen(intel)) > 0) {
+            while (write_retries > 0) {
+                if (write(sockfd, intel, strlen(intel)) >= 0) {
                     log_message(log_fp, "Sent intelligence: THREAT ---> AIR ---> ENEMY_AIRCRAFT");
                     printf("Radar: Sent intelligence: THREAT ---> AIR ---> ENEMY_AIRCRAFT\n");
-                    sent = 1;
-                } else {
+                    break;
+                }
+                if (errno != EAGAIN && errno != EWOULDBLOCK) {
                     char log_msg[BUFFER_SIZE];
                     snprintf(log_msg, BUFFER_SIZE, "Failed to send intelligence: %s", strerror(errno));
                     log_message(log_fp, log_msg);
                     printf("Radar: %s\n", log_msg);
-                    write_retries--;
-                    usleep(100000); // 100ms
+                    close(sockfd);
+                    sockfd = -1;
+                    break;
                 }
+                write_retries--;
+                usleep(100000);
             }
-            if (!sent) {
+            if (write_retries == 0 && sockfd >= 0) {
                 log_message(log_fp, "Aborted sending intelligence after retries");
                 printf("Radar: Aborted sending intelligence after retries\n");
-                break;
+                close(sockfd);
+                sockfd = -1;
+                continue;
             }
         }
 
         // Check for server messages
+        char buffer[BUFFER_SIZE];
         memset(buffer, 0, BUFFER_SIZE);
         int n = read(sockfd, buffer, BUFFER_SIZE - 1);
-        if (n <= 0) {
+        if (n > 0) {
+            buffer[n] = '\0';
+            if (strcmp(buffer, "SHUTDOWN") == 0) {
+                log_message(log_fp, "Received shutdown signal");
+                printf("Radar: Received shutdown signal\n");
+                break;
+            }
+        } else if (n == 0 || (n < 0 && errno != EAGAIN && errno != EWOULDBLOCK)) {
             char log_msg[BUFFER_SIZE];
             snprintf(log_msg, BUFFER_SIZE, "Disconnected from server: %s", n == 0 ? "closed" : strerror(errno));
             log_message(log_fp, log_msg);
             printf("Radar: %s\n", log_msg);
-            break;
-        }
-        buffer[n] = '\0';
-        if (strcmp(buffer, "SHUTDOWN") == 0) {
-            log_message(log_fp, "Received shutdown signal");
-            printf("Radar: Received shutdown signal\n");
-            break;
+            close(sockfd);
+            sockfd = -1;
+            continue;
         }
 
-        sleep(30); // Slowed down
+        sleep(30); // Slow down
     }
 
     // Cleanup
+    if (sockfd >= 0) close(sockfd);
     fclose(log_fp);
-    close(sockfd);
     printf("Radar: Terminated\n");
     return 0;
 }
+
