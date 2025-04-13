@@ -80,12 +80,11 @@ int main() {
     // Simulate sending intelligence
     srand(time(NULL));
     char buffer[BUFFER_SIZE];
-    int first_loop = 1;
     while (1) {
         log_message(log_fp, "Checking for threats");
         printf("Radar: Checking for threats\n");
 
-        if (first_loop || rand() % 10 < 8) { // Force threat on first loop, then 80%
+        if (rand() % 10 < 2) { // 20% chance
             char intel[] = "THREAT ---> AIR ---> ENEMY_AIRCRAFT ---> Coordinate: 51.5074,-0.1278";
             int write_retries = 3;
             int sent = 0;
@@ -109,7 +108,6 @@ int main() {
                 break;
             }
         }
-        first_loop = 0;
 
         // Check for server messages
         memset(buffer, 0, BUFFER_SIZE);
@@ -128,7 +126,7 @@ int main() {
             break;
         }
 
-        sleep(10);
+        sleep(30); // Slowed down
     }
 
     // Cleanup

@@ -16,6 +16,7 @@
 #define BUFFER_SIZE 1024
 #define KEY "0123456789abcdef0123456789abcdef"
 #define LOG_FILE "nuclearControl.log"
+#define MAX_THREATS 10
 
 // Structure for client info
 typedef struct {
@@ -29,6 +30,8 @@ int client_count = 0;
 pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
 FILE *log_fp = NULL;
 char last_threat[BUFFER_SIZE] = {0};
+char threat_list[MAX_THREATS][BUFFER_SIZE] = {0};
+int threat_count = 0;
 int shutdown_flag = 0;
 
 // Encrypt message using AES-256
@@ -181,9 +184,22 @@ void *handle_client(void *arg) {
             log_message(log_msg);
             printf("NuclearControl: %s\n", log_msg);
 
-            // Store threat for menu
+            // Store threat in list
             if (strstr(buffer, "THREAT")) {
-                strncpy(last_threat, buffer, BUFFER_SIZE - 1);
+                pthread_mutex_lock(&mutex);
+                if (threat_count < MAX_THREATS) {
+                    strncpy(threat_list[threat_count], buffer, BUFFER_SIZE - 1);
+                    threat_count++;
+                } else {
+                    // Shift list and add new threat
+                    for (int i = 1; i < MAX_THREATS; i++) {
+                        strncpy(threat_list[i - 1], threat_list[i], BUFFER_SIZE - 1);
+                    }
+                    strncpy(threat_list[MAX_THREATS - 1], buffer, BUFFER_SIZE - 1);
+                }
+                snprintf(log_msg, BUFFER_SIZE, "Added threat to list (count: %d): %s", threat_count, buffer);
+                log_message(log_msg);
+                pthread_mutex_unlock(&mutex);
             }
         } else if (n == 0) {
             char log_msg[BUFFER_SIZE];
@@ -199,11 +215,7 @@ void *handle_client(void *arg) {
                 printf("NuclearControl: %s\n", log_msg);
                 break;
             }
-            // Debug: Log read attempt
-            char log_msg[BUFFER_SIZE];
-            snprintf(log_msg, BUFFER_SIZE, "Read from %s: no data available", client_type);
-            log_message(log_msg);
-            usleep(200000); // 200ms to reduce CPU load
+            usleep(200000); // 200ms
         }
     }
 
@@ -255,10 +267,20 @@ void *menu_system(void *arg) {
                 break;
             }
             case 2: {
-                if (strlen(last_threat) == 0) {
+                pthread_mutex_lock(&mutex);
+                if (threat_count == 0) {
                     printf("No threat detected yet\n");
+                    pthread_mutex_unlock(&mutex);
                     break;
                 }
+                // Select random threat
+                int idx = rand() % threat_count;
+                strncpy(last_threat, threat_list[idx], BUFFER_SIZE - 1);
+                pthread_mutex_unlock(&mutex);
+
+                char log_msg[BUFFER_SIZE];
+                snprintf(log_msg, BUFFER_SIZE, "Selected last threat: %s", last_threat);
+                log_message(log_msg);
                 printf("Last threat: %s\n", last_threat);
                 printf("Select launch asset:\n");
                 printf("1. Missile Silo\n");
@@ -413,7 +435,12 @@ int main(int argc, char *argv[]) {
         log_message(log_msg);
         printf("NuclearControl: %s\n", log_msg);
 
-        strncpy(last_threat, threat, BUFFER_SIZE - 1);
+        pthread_mutex_lock(&mutex);
+        if (threat_count < MAX_THREATS) {
+            strncpy(threat_list[threat_count], threat, BUFFER_SIZE - 1);
+            threat_count++;
+        }
+        pthread_mutex_unlock(&mutex);
     }
 
     // Accept clients

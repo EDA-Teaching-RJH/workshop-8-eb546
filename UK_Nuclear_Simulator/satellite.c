@@ -51,7 +51,7 @@ int main() {
         char log_msg[BUFFER_SIZE];
         snprintf(log_msg, BUFFER_SIZE, "Connection failed, retrying (%d left): %s", connect_retries, strerror(errno));
         log_message(log_fp, log_msg);
-        printf("Satelite: %s\n", log_msg);
+        printf("Satellite: %s\n", log_msg);
         sleep(1);
         connect_retries--;
     }
@@ -64,7 +64,7 @@ int main() {
     }
 
     // Send client type
-    char *type = "satellite";
+    char *type = "satelite";
     if (write(sockfd, type, strlen(type)) < 0) {
         char log_msg[BUFFER_SIZE];
         snprintf(log_msg, BUFFER_SIZE, "Failed to send client type: %s", strerror(errno));
@@ -80,12 +80,11 @@ int main() {
     // Simulate sending intelligence
     srand(time(NULL));
     char buffer[BUFFER_SIZE];
-    int first_loop = 1;
     while (1) {
         log_message(log_fp, "Checking for threats");
         printf("Satellite: Checking for threats\n");
 
-        if (first_loop || rand() % 10 < 8) { // Force threat on first loop, then 80%
+        if (rand() % 10 < 2) { // 20% chance
             char intel[] = "THREAT ---> SPACE ---> ENEMY_SATELLITE ---> Coordinate: 55.7558,37.6173";
             int write_retries = 3;
             int sent = 0;
@@ -98,18 +97,17 @@ int main() {
                     char log_msg[BUFFER_SIZE];
                     snprintf(log_msg, BUFFER_SIZE, "Failed to send intelligence: %s", strerror(errno));
                     log_message(log_fp, log_msg);
-                    printf("Satellite: %s\n", log_msg);
+                    printf("Satelite: %s\n", log_msg);
                     write_retries--;
                     usleep(100000); // 100ms
                 }
             }
             if (!sent) {
                 log_message(log_fp, "Aborted sending intelligence after retries");
-                printf("Satellite: Aborted sending intelligence after retries\n");
+                printf("Satelite: Aborted sending intelligence after retries\n");
                 break;
             }
         }
-        first_loop = 0;
 
         // Check for server messages
         memset(buffer, 0, BUFFER_SIZE);
@@ -128,7 +126,7 @@ int main() {
             break;
         }
 
-        sleep(15);
+        sleep(45); // Slowed down
     }
 
     // Cleanup
