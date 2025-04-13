@@ -84,7 +84,7 @@ int main() {
         log_message(log_fp, "Checking for threats");
         printf("Radar: Checking for threats\n");
 
-        if (rand() % 10 < 2) { // 20% chance
+        if (rand() % 10 < 4) { // 20% chance
             char intel[] = "THREAT ---> AIR ---> ENEMY_AIRCRAFT ---> Coordinate: 51.5074,-0.1278";
             int write_retries = 3;
             int sent = 0;

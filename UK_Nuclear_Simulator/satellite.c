@@ -84,7 +84,7 @@ int main() {
         log_message(log_fp, "Checking for threats");
         printf("Satellite: Checking for threats\n");
 
-        if (rand() % 10 < 2) { // 20% chance
+        if (rand() % 10 < 4) { // 40% chance
             char intel[] = "THREAT ---> SPACE ---> ENEMY_SATELLITE ---> Coordinate: 55.7558,37.6173";
             int write_retries = 3;
             int sent = 0;
