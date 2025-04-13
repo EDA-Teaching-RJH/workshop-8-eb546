@@ -8,7 +8,7 @@
 #define SERVER_IP "127.0.0.1"
 #define PORT 8080
 #define BUFFER_SIZE 1024
-#define LOG_FILE "satelite.log"
+#define LOG_FILE "satellite.log"
 
 // Log message
 void log_message(FILE *fp, const char *msg) {
@@ -47,7 +47,7 @@ int main() {
     }
 
     // Send client type
-    char *type = "satelite";
+    char *type = "satellite";
     write(sockfd, type, strlen(type));
     log_message(log_fp, "Connected to nuclearControl");
 
