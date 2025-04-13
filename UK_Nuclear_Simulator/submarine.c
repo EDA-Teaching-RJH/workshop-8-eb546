@@ -34,7 +34,7 @@ int main() {
     // Initialize logging
     FILE *log_fp = fopen(LOG_FILE, "a");
     if (!log_fp) {
-        perror("Failed to open log file");
+        perror("\nERROR: Failed to open log file\n");
         exit(1);
     }
     chmod(LOG_FILE, 0600);
@@ -42,7 +42,7 @@ int main() {
     // Setup socket
     int sockfd = socket(AF_INET, SOCK_STREAM, 0);
     if (sockfd < 0) {
-        perror("Socket creation failed");
+        perror("\nERROR: Socket creation failed\n");
         exit(1);
     }
 
@@ -52,7 +52,7 @@ int main() {
     inet_pton(AF_INET, SERVER_IP, &server_addr.sin_addr);
 
     if (connect(sockfd, (struct sockaddr *)&server_addr, sizeof(server_addr)) < 0) {
-        perror("Connection failed");
+        perror("\nERROR: Connection failed\n");
         close(sockfd);
         exit(1);
     }
@@ -61,6 +61,7 @@ int main() {
     char *type = "submarine";
     write(sockfd, type, strlen(type));
     log_message(log_fp, "Connected to nuclearControl");
+    printf("\nINFO: Submarine connected to server\n\n");
 
     // Simulate sending intelligence
     srand(time(NULL));
@@ -71,6 +72,7 @@ int main() {
             char intel[] = "THREAT ---> SEA ---> ENEMY_SUB ---> Coordinates: 48.8566,2.3522";
             write(sockfd, intel, strlen(intel));
             log_message(log_fp, "Sent intelligence: THREAT ---> SEA ---> ENEMY_SUB");
+            printf("\nINFO: Sent intelligence: %s\n", intel);
         }
 
         // Listen for commands
@@ -78,6 +80,7 @@ int main() {
         int n = read(sockfd, buffer, BUFFER_SIZE);
         if (n <= 0) {
             log_message(log_fp, "Disconnected from server");
+            printf("\nINFO: Disconnected from server\n\n");
             break;
         }
 
@@ -87,16 +90,21 @@ int main() {
         char log_msg[BUFFER_SIZE];
         snprintf(log_msg, BUFFER_SIZE, "Received: %s", decrypted);
         log_message(log_fp, log_msg);
+        printf("\nINFO: Received command: %s\n", decrypted);
 
         // Process launch command
         if (strstr(decrypted, "LAUNCH:TARGET_SEA_SPACE")) {
-            log_message(log_fp, "Launch command verified for SEA/SPACE target. Initiating countdown...\n");
+            log_message(log_fp, "Launch command verified for SEA/SPACE target. Initiating countdown...");
+            printf("\n=== Launch Sequence Initiated ===\n");
             for (int i = 15; i >= 0; i--) {
-                snprintf(log_msg, BUFFER_SIZE, "Launch in %d seconds\n", i);
+                snprintf(log_msg, BUFFER_SIZE, "Launch in %d seconds", i);
                 log_message(log_fp, log_msg);
+                printf("T-%d seconds\n", i);
                 sleep(1);
             }
             log_message(log_fp, "Missile launched to SEA/SPACE target!");
+            printf("SUCCESS: Missile launched to SEA/SPACE target\n");
+            printf("=============================\n\n");
         }
 
         sleep(5);
@@ -107,4 +115,3 @@ int main() {
     close(sockfd);
     return 0;
 }
-
