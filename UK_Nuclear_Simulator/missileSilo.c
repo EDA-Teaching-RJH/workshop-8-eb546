@@ -1,3 +1,4 @@
+#define _POSIX_C_SOURCE 200112L
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -19,7 +20,6 @@
 #define CONNECT_RETRIES 5
 #define CONNECT_RETRY_DELAY 2
 
-// Decrypt message
 void decrypt_message(const char *input, int in_len, char *output) {
     if (!input || !output || in_len % 16 != 0 || in_len > BUFFER_SIZE) return;
     AES_KEY dec_key;
@@ -27,10 +27,9 @@ void decrypt_message(const char *input, int in_len, char *output) {
     for (int i = 0; i < in_len; i += 16) {
         AES_decrypt((unsigned char *)input + i, (unsigned char *)output + i, &dec_key);
     }
-    output[in_len - 1] = '\0'; // Ensure null-termination
+    output[in_len - 1] = '\0';
 }
 
-// Log message
 void log_message(FILE *fp, const char *msg) {
     time_t now = time(NULL);
     char time_buf[26];
@@ -40,7 +39,7 @@ void log_message(FILE *fp, const char *msg) {
     fflush(fp);
 }
 
-int main() {
+int main(void) {
     FILE *log_fp = fopen(LOG_FILE, "a");
     if (!log_fp) {
         perror("Failed to open log file");
@@ -50,7 +49,6 @@ int main() {
 
     int sockfd = -1;
     while (1) {
-        // Setup socket
         if (sockfd < 0) {
             sockfd = socket(AF_INET, SOCK_STREAM, 0);
             if (sockfd < 0) {
@@ -62,7 +60,6 @@ int main() {
                 exit(1);
             }
 
-            // Set non-blocking
             if (fcntl(sockfd, F_SETFL, O_NONBLOCK) < 0) {
                 char log_msg[BUFFER_SIZE];
                 snprintf(log_msg, BUFFER_SIZE, "Failed to set socket non-blocking: %s", strerror(errno));
@@ -78,7 +75,6 @@ int main() {
             server_addr.sin_port = htons(PORT);
             inet_pton(AF_INET, SERVER_IP, &server_addr.sin_addr);
 
-            // Connect with retries
             int retries = CONNECT_RETRIES;
             while (retries > 0) {
                 if (connect(sockfd, (struct sockaddr *)&server_addr, sizeof(server_addr)) == 0) {
@@ -97,13 +93,19 @@ int main() {
                 FD_ZERO(&fdset);
                 FD_SET(sockfd, &fdset);
                 struct timeval tv = { .tv_sec = 2, .tv_usec = 0 };
-                if (select(sockfd + 1, NULL, &fdset, NULL, &tv) > 0) {
+                int sel_ret = select(sockfd + 1, NULL, &fdset, NULL, &tv);
+                if (sel_ret > 0) {
                     int so_error;
                     socklen_t len = sizeof(so_error);
                     getsockopt(sockfd, SOL_SOCKET, SO_ERROR, &so_error, &len);
                     if (so_error == 0) {
                         break;
                     }
+                } else if (sel_ret < 0) {
+                    char log_msg[BUFFER_SIZE];
+                    snprintf(log_msg, BUFFER_SIZE, "Select failed: %s", strerror(errno));
+                    log_message(log_fp, log_msg);
+                    printf("MissileSilo: %s\n", log_msg);
                 }
                 retries--;
                 sleep(CONNECT_RETRY_DELAY);
@@ -117,11 +119,11 @@ int main() {
                 continue;
             }
 
-            // Send client type
             char *type = "silo";
             int write_retries = 3;
             while (write_retries > 0) {
-                if (write(sockfd, type, strlen(type)) >= 0) {
+                ssize_t w = write(sockfd, type, strlen(type));
+                if (w >= 0) {
                     break;
                 }
                 if (errno != EAGAIN && errno != EWOULDBLOCK) {
@@ -145,10 +147,9 @@ int main() {
             printf("MissileSilo: Connected to nuclearControl\n");
         }
 
-        // Listen for commands
         char buffer[BUFFER_SIZE];
         memset(buffer, 0, BUFFER_SIZE);
-        int n = read(sockfd, buffer, BUFFER_SIZE - 1);
+        ssize_t n = read(sockfd, buffer, BUFFER_SIZE - 1);
         if (n > 0) {
             buffer[n] = '\0';
             if (strcmp(buffer, "SHUTDOWN") == 0) {
@@ -192,10 +193,9 @@ int main() {
             continue;
         }
 
-        usleep(100000); // Prevent tight loop
+        usleep(100000);
     }
 
-    // Cleanup
     if (sockfd >= 0) close(sockfd);
     fclose(log_fp);
     printf("MissileSilo: Terminated\n");

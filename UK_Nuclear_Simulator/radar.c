@@ -1,3 +1,4 @@
+#define _POSIX_C_SOURCE 200112L
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -17,7 +18,6 @@
 #define CONNECT_RETRIES 5
 #define CONNECT_RETRY_DELAY 2
 
-// Log message
 void log_message(FILE *fp, const char *msg) {
     time_t now = time(NULL);
     char time_buf[26];
@@ -27,7 +27,7 @@ void log_message(FILE *fp, const char *msg) {
     fflush(fp);
 }
 
-int main() {
+int main(void) {
     FILE *log_fp = fopen(LOG_FILE, "a");
     if (!log_fp) {
         perror("Failed to open log file");
@@ -38,7 +38,6 @@ int main() {
     srand(time(NULL));
     int sockfd = -1;
     while (1) {
-        // Setup socket
         if (sockfd < 0) {
             sockfd = socket(AF_INET, SOCK_STREAM, 0);
             if (sockfd < 0) {
@@ -50,7 +49,6 @@ int main() {
                 exit(1);
             }
 
-            // Set non-blocking
             if (fcntl(sockfd, F_SETFL, O_NONBLOCK) < 0) {
                 char log_msg[BUFFER_SIZE];
                 snprintf(log_msg, BUFFER_SIZE, "Failed to set socket non-blocking: %s", strerror(errno));
@@ -66,7 +64,6 @@ int main() {
             server_addr.sin_port = htons(PORT);
             inet_pton(AF_INET, SERVER_IP, &server_addr.sin_addr);
 
-            // Connect with retries
             int retries = CONNECT_RETRIES;
             while (retries > 0) {
                 if (connect(sockfd, (struct sockaddr *)&server_addr, sizeof(server_addr)) == 0) {
@@ -111,11 +108,11 @@ int main() {
                 continue;
             }
 
-            // Send client type
             char *type = "radar";
             int write_retries = 3;
             while (write_retries > 0) {
-                if (write(sockfd, type, strlen(type)) >= 0) {
+                ssize_t w = write(sockfd, type, strlen(type));
+                if (w >= 0) {
                     break;
                 }
                 if (errno != EAGAIN && errno != EWOULDBLOCK) {
@@ -139,12 +136,12 @@ int main() {
             printf("Radar: Connected to nuclearControl\n");
         }
 
-        // Send intelligence
-        if ((rand() % 100) < 10) { // 10% chance
+        if ((unsigned)(rand() % 100) < 10) {
             char intel[] = "THREAT ---> AIR ---> ENEMY_AIRCRAFT ---> Coordinate: 51.5074,-0.1278";
             int write_retries = 3;
             while (write_retries > 0) {
-                if (write(sockfd, intel, strlen(intel)) >= 0) {
+                ssize_t w = write(sockfd, intel, strlen(intel));
+                if (w >= 0) {
                     log_message(log_fp, "Sent intelligence: THREAT ---> AIR ---> ENEMY_AIRCRAFT");
                     printf("Radar: Sent intelligence: THREAT ---> AIR ---> ENEMY_AIRCRAFT\n");
                     break;
@@ -170,10 +167,9 @@ int main() {
             }
         }
 
-        // Check for server messages
         char buffer[BUFFER_SIZE];
         memset(buffer, 0, BUFFER_SIZE);
-        int n = read(sockfd, buffer, BUFFER_SIZE - 1);
+        ssize_t n = read(sockfd, buffer, BUFFER_SIZE - 1);
         if (n > 0) {
             buffer[n] = '\0';
             if (strcmp(buffer, "SHUTDOWN") == 0) {
@@ -191,13 +187,11 @@ int main() {
             continue;
         }
 
-        sleep(30); // Slow down
+        sleep(30);
     }
 
-    // Cleanup
     if (sockfd >= 0) close(sockfd);
     fclose(log_fp);
     printf("Radar: Terminated\n");
     return 0;
 }
-
