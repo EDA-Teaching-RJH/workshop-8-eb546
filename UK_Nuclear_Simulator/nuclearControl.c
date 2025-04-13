@@ -73,7 +73,7 @@ void log_message(const char *msg) {
 
 // Delete all log files
 void delete_logs() {
-    const char *log_files[] = {"nuclearControl.log", "missileSilo.log", "submarine.log", "radar.log", "satelite.log"};
+    const char *log_files[] = {"nuclearControl.log", "missileSilo.log", "submarine.log", "radar.log", "satellite.log"};
     int num_files = 5;
 
     for (int i = 0; i < num_files; i++) {
