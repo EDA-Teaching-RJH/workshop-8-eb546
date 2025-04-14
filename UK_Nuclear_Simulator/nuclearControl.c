@@ -80,51 +80,68 @@ int parse_intel(const char *message, Intel *intel) {
 
     memset(intel, 0, sizeof(Intel));
     char *token = strtok(copy, "|");
-    int fields = 0;
     int valid = 1;
-    char log_msg[2048];
+    char *fields[5] = {0}; // Store key-value pairs
+    int field_count = 0;
 
-    while (token && valid) {
-        char *key = strtok(token, ":");
+    // Collect all fields
+    while (token && field_count < 5) {
+        fields[field_count++] = token;
+        token = strtok(NULL, "|");
+    }
+
+    // Verify exactly 5 fields
+    if (field_count != 5) {
+        char log_msg[2048];
+        snprintf(log_msg, sizeof(log_msg), "Incorrect field count:  %d fields in message:  %.1000s", 
+                 field_count, message);
+        log_event("ERROR", log_msg);
+        free(copy);
+        return 0;
+    }
+
+    // Parse each field
+    for (int i = 0; i < 5 && valid; i++) {
+        char *key = strtok(fields[i], ":");
         char *value = strtok(NULL, ":");
-        if (!key || !value) {
-            snprintf(log_msg, sizeof(log_msg), "Invalid key-value pair in message:  %.1000s", token ? token : "null");
+        if (!key || !value || !value[0]) {
+            char log_msg[2048];
+            snprintf(log_msg, sizeof(log_msg), "Invalid key-value pair at field %d:  %.1000s", 
+                     i + 1, fields[i] ? fields[i] : "null");
             log_event("ERROR", log_msg);
             valid = 0;
-            break;
+            continue;
         }
+
         if (strcmp(key, "source") == 0) {
             strncpy(intel->source, value, sizeof(intel->source) - 1);
-            fields++;
         } else if (strcmp(key, "type") == 0) {
             strncpy(intel->type, value, sizeof(intel->type) - 1);
-            fields++;
         } else if (strcmp(key, "data") == 0) {
             strncpy(intel->data, value, sizeof(intel->data) - 1);
-            fields++;
         } else if (strcmp(key, "threat_level") == 0) {
             char *endptr;
             intel->threat_level = strtod(value, &endptr);
             if (*endptr != '\0' || intel->threat_level < 0.0 || intel->threat_level > 1.0) {
-                snprintf(log_msg, sizeof(log_msg), "Invalid threat level in message:  %s", value);
+                char log_msg[2048];
+                snprintf(log_msg, sizeof(log_msg), "Invalid threat level:  %s", value);
                 log_event("ERROR", log_msg);
                 valid = 0;
             }
-            fields++;
         } else if (strcmp(key, "location") == 0) {
             strncpy(intel->location, value, sizeof(intel->location) - 1);
-            fields++;
+        } else {
+            char log_msg[2048];
+            snprintf(log_msg, sizeof(log_msg), "Unknown key at field %d:  %s", i + 1, key);
+            log_event("ERROR", log_msg);
+            valid = 0;
         }
-        token = strtok(NULL, "|");
     }
 
-    if (valid && fields != 5) {
-        snprintf(log_msg, sizeof(log_msg), "Incomplete intelligence message,  %d fields received", fields);
-        log_event("ERROR", log_msg);
-        valid = 0;
-    }
-    if (valid && (!intel->source[0] || !intel->type[0])) {
-        snprintf(log_msg, sizeof(log_msg), "Missing source or type in message:  %.1000s", message);
+    // Final validation
+    if (valid && (!intel->source[0] || !intel->type[0] || !intel->data[0] || !intel->location[0])) {
+        char log_msg[2048];
+        snprintf(log_msg, sizeof(log_msg), "Empty required field in message:  %.1000s", message);
         log_event("ERROR", log_msg);
         valid = 0;
     }
@@ -156,11 +173,11 @@ void *handle_client(void *arg) {
         }
         buffer[bytes] = '\0';
 
-        snprintf(log_msg, sizeof(log_msg), "ENCRYPTED MESSAGE:  %.1000s", buffer);
+        snprintf(log_msg, sizeof(log_msg), "Encrypted Message:  %.1000s", buffer);
         log_event("MESSAGE", log_msg);
 
         caesar_decrypt(buffer, plaintext, sizeof(plaintext));
-        snprintf(log_msg, sizeof(log_msg), "DECRYPTED MESSAGE:  %.1000s", plaintext);
+        snprintf(log_msg, sizeof(log_msg), "Decrypted Message:  %.1000s", plaintext);
         log_event("MESSAGE", log_msg);
 
         if (parse_intel(plaintext, &intel)) {
@@ -206,9 +223,9 @@ void simulate_war_test(Client *clients, size_t client_count) {
         snprintf(command, sizeof(command), "command:launch|target:%s", intel.location);
         char ciphertext[512];
         caesar_encrypt(command, ciphertext, sizeof(ciphertext));
-        snprintf(log_msg, sizeof(log_msg), "ENCRYPTED COMMAND:  %.500s", ciphertext);
+        snprintf(log_msg, sizeof(log_msg), "Encrypted Command:  %.500s", ciphertext);
         log_event("COMMAND", log_msg);
-        snprintf(log_msg, sizeof(log_msg), "DECRYPTED COMMAND:  %s", command);
+        snprintf(log_msg, sizeof(log_msg), "Decrypted Command:  %s", command);
         log_event("COMMAND", log_msg);
 
         for (size_t i = 0; i < client_count; i++) {
@@ -334,7 +351,6 @@ int main(int argc, char *argv[]) {
         close(server_socks[i]);
     }
 
-    log_event("SHUTDOWN", "Nuclear Control terminated after 30 seconds simulation!");
+    log_event("SHUTDOWN", "Nuclear Control terminated after 30 seconds simulation");
     return 0;
 }
-

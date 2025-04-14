@@ -116,11 +116,11 @@ int main(void) {
         }
         buffer[bytes] = '\0';
 
-        snprintf(log_msg, sizeof(log_msg), "ENCRYPTED MESSAGE:  %.1000s", buffer);
+        snprintf(log_msg, sizeof(log_msg), "Encrypted Message:  %.1000s", buffer);
         log_event("MESSAGE", log_msg);
 
         caesar_decrypt(buffer, plaintext, sizeof(plaintext));
-        snprintf(log_msg, sizeof(log_msg), "DECRYPTED MESSAGE:  %.1000s", plaintext);
+        snprintf(log_msg, sizeof(log_msg), "Decrypted Message:  %.1000s", plaintext);
         log_event("MESSAGE", log_msg);
 
         if (parse_command(plaintext, command, target)) {
@@ -135,7 +135,7 @@ int main(void) {
     }
 
     close(sock);
-    log_event("SHUTDOWN", "Missile Silo terminated after 30 seconds simulation!");
+    log_event("SHUTDOWN", "Missile Silo terminated after 30 seconds simulation");
     return 0;
 }
 

@@ -49,15 +49,15 @@ void send_intel(int sock) {
     int idx = rand() % 3;
     double threat_level = 0.1 + (rand() % 90) / 100.0;
     snprintf(message, sizeof(message),
-             "SOURCE:Satellite|type:%s|data:%s|threat_level:%.2f|location:%s",
+             "source:Satellite|type:%s|data:%s|threat_level:%.2f|location:%s",
              threat_types[idx % 2], threat_data[idx], threat_level, locations[idx]);
     char ciphertext[1024];
     caesar_encrypt(message, ciphertext, sizeof(ciphertext));
 
     char log_msg[2048];
-    snprintf(log_msg, sizeof(log_msg), "ENCRYPTED MESSAGE:  %.1000s", ciphertext);
+    snprintf(log_msg, sizeof(log_msg), "Encrypted Message:  %.1000s", ciphertext);
     log_event("MESSAGE", log_msg);
-    snprintf(log_msg, sizeof(log_msg), "ORIGINAL MESSAGE:  %.1000s", message);
+    snprintf(log_msg, sizeof(log_msg), "Original Message:  %.1000s", message);
     log_event("MESSAGE", log_msg);
 
     if (send(sock, ciphertext, strlen(ciphertext), 0) < 0) {
@@ -65,7 +65,7 @@ void send_intel(int sock) {
         return;
     }
     snprintf(log_msg, sizeof(log_msg), 
-             "INTELLIGENCE SENT:  Type:  %-4s,  Details:  %-15s,  Threat Level:  %.2f,  Location:  %s",
+             "Intelligence Sent:  Type:  %-4s,  Details:  %-15s,  Threat Level:  %.2f,  Location:  %s",
              threat_types[idx % 2], threat_data[idx], threat_level, locations[idx]);
     log_event("INTEL", log_msg);
 }
@@ -101,6 +101,6 @@ int main(void) {
     }
 
     close(sock);
-    log_event("SHUTDOWN", "Satellite terminated after 30 seconds simulation!");
+    log_event("SHUTDOWN", "Satellite terminated after 30 seconds simulation");
     return 0;
 }
