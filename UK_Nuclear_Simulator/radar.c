@@ -36,7 +36,7 @@ void caesar_encrypt(const char *plaintext, char *ciphertext, size_t len) {
             char base = isupper((unsigned char)plaintext[i]) ? 'A' : 'a';
             ciphertext[i] = (char)((plaintext[i] - base + CAESAR_SHIFT) % 26 + base);
         } else {
-            ciphertext[i] = plaintext[i];
+        ciphertext[i] = plaintext[i];
         }
     }
 }
@@ -48,8 +48,8 @@ void send_intel(int sock) {
     int idx = rand() % 3;
     double threat_level = 0.1 + (rand() % 90) / 100.0;
     snprintf(message, sizeof(message),
-             "source:Radar|type:Air|data:%s|threat_level:%.2f|location:%s",
-             threat_data[idx], threat_level, locations[idx]);
+            "source:Radar|type:Air|data:%s|threat_level:%.2f|location:%s",
+            threat_data[idx], threat_level, locations[idx]);
     char ciphertext[1024];
     caesar_encrypt(message, ciphertext, sizeof(ciphertext));
 
@@ -64,8 +64,8 @@ void send_intel(int sock) {
         return;
     }
     snprintf(log_msg, sizeof(log_msg), 
-             "Intelligence Sent:  Type:  Air,  Details:  %-15s,  Threat Level:  %.2f,  Location:  %s",
-             threat_data[idx], threat_level, locations[idx]);
+            "Intelligence Sent:  Type:  Air,  Details:  %-15s,  Threat Level:  %.2f,  Location:  %s",
+            threat_data[idx], threat_level, locations[idx]);
     log_event("INTEL", log_msg);
 }
 
@@ -103,3 +103,4 @@ int main(void) {
     log_event("SHUTDOWN", "Radar terminated after 2 minutes simulation");
     return 0;
 }
+

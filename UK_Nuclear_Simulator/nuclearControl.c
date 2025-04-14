@@ -158,8 +158,10 @@ void send_command(Client *clients, size_t client_count, int target_port, const c
     snprintf(log_msg, sizeof(log_msg), "Decrypted Command:  %s", command);
     log_event("COMMAND", log_msg);
 
+    int found = 0;
     for (size_t i = 0; i < client_count; i++) {
         if (clients[i].port == target_port) {
+            found = 1;
             if (send(clients[i].sock, ciphertext, strlen(ciphertext), 0) < 0) {
                 snprintf(log_msg, sizeof(log_msg), 
                          "Failed to send command to %s : %d", 
@@ -172,6 +174,11 @@ void send_command(Client *clients, size_t client_count, int target_port, const c
                 log_event("COMMAND", log_msg);
             }
         }
+    }
+    if (!found) {
+        snprintf(log_msg, sizeof(log_msg), "No client found for port %d to send %s command", 
+                 target_port, source);
+        log_event("ERROR", log_msg);
     }
 }
 
@@ -186,7 +193,7 @@ void *handle_client(void *arg) {
     static size_t client_count = 0;
     static pthread_mutex_t clients_mutex = PTHREAD_MUTEX_INITIALIZER;
 
-    // Store client info for command sending
+    // Store client info
     pthread_mutex_lock(&clients_mutex);
     if (!clients) {
         clients = malloc(MAX_CLIENTS * sizeof(Client));
@@ -197,10 +204,18 @@ void *handle_client(void *arg) {
             free(client);
             return NULL;
         }
+        memset(clients, 0, MAX_CLIENTS * sizeof(Client));
     }
     if (client_count < MAX_CLIENTS) {
         clients[client_count] = *client;
         client_count++;
+        snprintf(log_msg, sizeof(log_msg), "Registered client %s : %d (total: %zu)", 
+                 client->ip, client->port, client_count);
+        log_event("DEBUG", log_msg);
+    } else {
+        snprintf(log_msg, sizeof(log_msg), "Max clients reached, cannot register %s : %d", 
+                 client->ip, client->port);
+        log_event("ERROR", log_msg);
     }
     pthread_mutex_unlock(&clients_mutex);
 
@@ -212,8 +227,8 @@ void *handle_client(void *arg) {
     while (time(NULL) - start_time < SIMULATION_DURATION) {
         ssize_t bytes = recv(client_sock, buffer, sizeof(buffer) - 1, 0);
         if (bytes <= 0) {
-            snprintf(log_msg, sizeof(log_msg), "Client %s : %d disconnected", 
-                     client->ip, client->port);
+            snprintf(log_msg, sizeof(log_msg), "Client %s : %d disconnected (bytes: %zd)", 
+                     client->ip, client->port, bytes);
             log_event("CONNECTION", log_msg);
             break;
         }
@@ -232,7 +247,7 @@ void *handle_client(void *arg) {
                      intel.source, intel.type, intel.data, intel.threat_level, intel.location);
             log_event("THREAT", log_msg);
 
-            // Send commands for high-threat Radar or Satellite messages
+            // Send commands for high-threat Radar or Satelite messages
             if (intel.threat_level > 0.7) {
                 pthread_mutex_lock(&clients_mutex);
                 if (strcmp(intel.source, "Radar") == 0) {
@@ -252,6 +267,21 @@ void *handle_client(void *arg) {
              client->ip, client->port);
     log_event("SHUTDOWN", log_msg);
     close(client_sock);
+
+    // Remove client from array
+    pthread_mutex_lock(&clients_mutex);
+    for (size_t i = 0; i < client_count; i++) {
+        if (clients[i].sock == client_sock) {
+            clients[i] = clients[client_count - 1];
+            client_count--;
+            snprintf(log_msg, sizeof(log_msg), "Unregistered client %s : %d (total: %zu)", 
+                     client->ip, client->port, client_count);
+            log_event("DEBUG", log_msg);
+            break;
+        }
+    }
+    pthread_mutex_unlock(&clients_mutex);
+
     free(client);
     return NULL;
 }

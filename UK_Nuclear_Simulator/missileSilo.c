@@ -116,7 +116,8 @@ int main(void) {
     while (time(NULL) - start_time < SIMULATION_DURATION) {
         ssize_t bytes = recv(sock, buffer, sizeof(buffer) - 1, 0);
         if (bytes <= 0) {
-            log_event("CONNECTION", "Disconnected from Nuclear Control");
+            snprintf(log_msg, sizeof(log_msg), "Disconnected from Nuclear Control (bytes: %zd)", bytes);
+            log_event("CONNECTION", log_msg);
             break;
         }
         buffer[bytes] = '\0';
@@ -130,13 +131,15 @@ int main(void) {
 
         if (parse_command(plaintext, command, target, details)) {
             if (strcmp(command, "launch") == 0) {
-                snprintf(log_msg, sizeof(log_msg), "Attacking Radar threat: %s at %s", 
-                         details[0] ? details : "Unknown", target);
+                snprintf(log_msg, sizeof(log_msg), "Attacking Radar threat: %s at %s", details, target);
                 log_event("COMMAND", log_msg);
             } else {
-                snprintf(log_msg, sizeof(log_msg), "Unknown Command: %s", command);
+                snprintf(log_msg, sizeof(log_msg), "Unknown command: %s", command);
                 log_event("ERROR", log_msg);
             }
+        } else {
+            snprintf(log_msg, sizeof(log_msg), "Failed to parse command: %s", plaintext);
+            log_event("ERROR", log_msg);
         }
     }
 

@@ -47,7 +47,7 @@ void send_intel(int sock) {
     const char *locations[] = {"Arctic Ocean", "Mediterranean", "Barents Sea"};
     char message[512];
     int idx = rand() % 3;
-    double threat_level = 0.1 + (rand() % 90) / 100.0;
+    double threat_level = 0.7 + (rand() % 30) / 100.0; // 0.7 to 0.99
     snprintf(message, sizeof(message),
              "source:Satellite|type:%s|data:%s|threat_level:%.2f|location:%s",
              threat_types[idx % 2], threat_data[idx], threat_level, locations[idx]);
