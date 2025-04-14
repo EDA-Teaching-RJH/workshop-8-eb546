@@ -16,7 +16,7 @@
 #define MAX_CLIENTS 4
 #define LOG_FILE "nuclearControl.log"
 #define CAESAR_SHIFT 3
-#define SIMULATION_DURATION 120
+#define SIMULATION_DURATION 30
 
 typedef struct {
     char source[20];
@@ -42,7 +42,7 @@ void log_event(const char *event_type, const char *details) {
     char *time_str = ctime(&now);
     if (time_str) {
         time_str[strlen(time_str) - 1] = '\0';
-        fprintf(fp, "[%s]  %-12s  %s\n", time_str, event_type, details);
+        fprintf(fp, "[%s] %-12s %s\n", time_str, event_type, details);
     }
     fclose(fp);
 }
@@ -74,42 +74,21 @@ void caesar_decrypt(const char *ciphertext, char *plaintext, size_t len) {
 int parse_intel(const char *message, Intel *intel) {
     char *copy = strdup(message);
     if (!copy) {
-        log_event("ERROR", "Memory allocation failed for parsing intelligence");
+        log_event("ERROR", "Memory allocation failed for parsing");
         return 0;
     }
 
     memset(intel, 0, sizeof(Intel));
     char *token = strtok(copy, "|");
     int valid = 1;
-    char *fields[5] = {0};
-    int field_count = 0;
-
-    while (token && field_count < 5) {
-        fields[field_count++] = token;
-        token = strtok(NULL, "|");
-    }
-
-    if (field_count != 5) {
-        char log_msg[2048];
-        snprintf(log_msg, sizeof(log_msg), "Incorrect field count:  %d fields in message:  %.1000s", 
-                 field_count, message);
-        log_event("ERROR", log_msg);
-        free(copy);
-        return 0;
-    }
-
-    for (int i = 0; i < 5 && valid; i++) {
-        char *key = strtok(fields[i], ":");
+    while (token && valid) {
+        char *key = strtok(token, ":");
         char *value = strtok(NULL, ":");
-        if (!key || !value || !value[0]) {
-            char log_msg[2048];
-            snprintf(log_msg, sizeof(log_msg), "Invalid key-value pair at field %d:  %.1000s", 
-                     i + 1, fields[i] ? fields[i] : "null");
-            log_event("ERROR", log_msg);
+        if (!key || !value) {
+            log_event("ERROR", "Malformed key-value pair");
             valid = 0;
-            continue;
+            break;
         }
-
         if (strcmp(key, "source") == 0) {
             strncpy(intel->source, value, sizeof(intel->source) - 1);
         } else if (strcmp(key, "type") == 0) {
@@ -119,67 +98,18 @@ int parse_intel(const char *message, Intel *intel) {
         } else if (strcmp(key, "threat_level") == 0) {
             char *endptr;
             intel->threat_level = strtod(value, &endptr);
-            if (*endptr != '\0' || intel->threat_level < 0.0 || intel->threat_level > 1.0) {
-                char log_msg[2048];
-                snprintf(log_msg, sizeof(log_msg), "Invalid threat level:  %s", value);
-                log_event("ERROR", log_msg);
-                valid = 0;
-            }
+            if (*endptr != '\0') valid = 0;
         } else if (strcmp(key, "location") == 0) {
             strncpy(intel->location, value, sizeof(intel->location) - 1);
-        } else {
-            char log_msg[2048];
-            snprintf(log_msg, sizeof(log_msg), "Unknown key at field %d:  %s", i + 1, key);
-            log_event("ERROR", log_msg);
-            valid = 0;
         }
+        token = strtok(NULL, "|");
     }
-
-    if (valid && (!intel->source[0] || !intel->type[0] || !intel->data[0] || !intel->location[0])) {
-        char log_msg[2048];
-        snprintf(log_msg, sizeof(log_msg), "Empty required field in message:  %.1000s", message);
-        log_event("ERROR", log_msg);
+    if (!valid || !intel->source[0] || !intel->type[0]) {
+        log_event("ERROR", "Invalid or incomplete intelligence");
         valid = 0;
     }
-
     free(copy);
     return valid;
-}
-
-void send_command(Client *clients, size_t client_count, int target_port, const char *source, const char *details, const char *location) {
-    char command[512];
-    snprintf(command, sizeof(command), "command:launch|target:%s|details:%s", location, details);
-    char ciphertext[1024];
-    caesar_encrypt(command, ciphertext, sizeof(ciphertext));
-
-    char log_msg[2048];
-    snprintf(log_msg, sizeof(log_msg), "Encrypted Command:  %.1000s", ciphertext);
-    log_event("COMMAND", log_msg);
-    snprintf(log_msg, sizeof(log_msg), "Decrypted Command:  %s", command);
-    log_event("COMMAND", log_msg);
-
-    int found = 0;
-    for (size_t i = 0; i < client_count; i++) {
-        if (clients[i].port == target_port) {
-            found = 1;
-            if (send(clients[i].sock, ciphertext, strlen(ciphertext), 0) < 0) {
-                snprintf(log_msg, sizeof(log_msg), 
-                         "Failed to send command to %s : %d", 
-                         clients[i].ip, clients[i].port);
-                log_event("ERROR", log_msg);
-            } else {
-                snprintf(log_msg, sizeof(log_msg), 
-                         "Sent command to %s : %d for %s threat: %s at %s", 
-                         clients[i].ip, clients[i].port, source, details, location);
-                log_event("COMMAND", log_msg);
-            }
-        }
-    }
-    if (!found) {
-        snprintf(log_msg, sizeof(log_msg), "No client found for port %d to send %s command", 
-                 target_port, source);
-        log_event("ERROR", log_msg);
-    }
 }
 
 void *handle_client(void *arg) {
@@ -188,38 +118,9 @@ void *handle_client(void *arg) {
     char buffer[1024];
     char plaintext[1024];
     Intel intel;
-    char log_msg[2048];
-    static Client *clients = NULL;
-    static size_t client_count = 0;
-    static pthread_mutex_t clients_mutex = PTHREAD_MUTEX_INITIALIZER;
+    char log_msg[2048]; // Increased buffer size
 
-    // Store client info
-    pthread_mutex_lock(&clients_mutex);
-    if (!clients) {
-        clients = malloc(MAX_CLIENTS * sizeof(Client));
-        if (!clients) {
-            log_event("ERROR", "Memory allocation failed for clients");
-            pthread_mutex_unlock(&clients_mutex);
-            close(client_sock);
-            free(client);
-            return NULL;
-        }
-        memset(clients, 0, MAX_CLIENTS * sizeof(Client));
-    }
-    if (client_count < MAX_CLIENTS) {
-        clients[client_count] = *client;
-        client_count++;
-        snprintf(log_msg, sizeof(log_msg), "Registered client %s : %d (total: %zu)", 
-                 client->ip, client->port, client_count);
-        log_event("DEBUG", log_msg);
-    } else {
-        snprintf(log_msg, sizeof(log_msg), "Max clients reached, cannot register %s : %d", 
-                 client->ip, client->port);
-        log_event("ERROR", log_msg);
-    }
-    pthread_mutex_unlock(&clients_mutex);
-
-    snprintf(log_msg, sizeof(log_msg), "Client connected from %s : %d", 
+    snprintf(log_msg, sizeof(log_msg), "Client connected from %s:%d", 
              client->ip, client->port);
     log_event("CONNECTION", log_msg);
 
@@ -227,61 +128,35 @@ void *handle_client(void *arg) {
     while (time(NULL) - start_time < SIMULATION_DURATION) {
         ssize_t bytes = recv(client_sock, buffer, sizeof(buffer) - 1, 0);
         if (bytes <= 0) {
-            snprintf(log_msg, sizeof(log_msg), "Client %s : %d disconnected (bytes: %zd)", 
-                     client->ip, client->port, bytes);
+            snprintf(log_msg, sizeof(log_msg), "Client %s:%d disconnected", 
+                     client->ip, client->port);
             log_event("CONNECTION", log_msg);
             break;
         }
         buffer[bytes] = '\0';
 
-        snprintf(log_msg, sizeof(log_msg), "Encrypted Message:  %.1000s", buffer);
+        snprintf(log_msg, sizeof(log_msg), "Encrypted message: %.1000s", buffer);
         log_event("MESSAGE", log_msg);
 
         caesar_decrypt(buffer, plaintext, sizeof(plaintext));
-        snprintf(log_msg, sizeof(log_msg), "Decrypted Message:  %.1000s", plaintext);
+        snprintf(log_msg, sizeof(log_msg), "Decrypted message: %.1000s", plaintext);
         log_event("MESSAGE", log_msg);
 
         if (parse_intel(plaintext, &intel)) {
             snprintf(log_msg, sizeof(log_msg), 
-                     "Source:  %-10s  Type:  %-4s  Details:  %-20s  Threat Level:  %.2f  Location:  %s",
+                     "Source: %s, Type: %s, Details: %s, Threat Level: %.2f, Location: %s",
                      intel.source, intel.type, intel.data, intel.threat_level, intel.location);
             log_event("THREAT", log_msg);
-
-            // Send commands for high-threat Radar or Satelite messages
-            if (intel.threat_level > 0.7) {
-                pthread_mutex_lock(&clients_mutex);
-                if (strcmp(intel.source, "Radar") == 0) {
-                    send_command(clients, client_count, PORT_SILO, intel.source, intel.data, intel.location);
-                } else if (strcmp(intel.source, "Satelite") == 0) {
-                    send_command(clients, client_count, PORT_SUB, intel.source, intel.data, intel.location);
-                }
-                pthread_mutex_unlock(&clients_mutex);
-            }
         } else {
-            snprintf(log_msg, sizeof(log_msg), "Failed to parse message:  %.1000s", plaintext);
+            snprintf(log_msg, sizeof(log_msg), "Failed to parse: %.1000s", plaintext);
             log_event("ERROR", log_msg);
         }
     }
 
-    snprintf(log_msg, sizeof(log_msg), "Client %s : %d terminated after 2 minutes simulation", 
+    snprintf(log_msg, sizeof(log_msg), "Client %s:%d terminated after 30s simulation", 
              client->ip, client->port);
     log_event("SHUTDOWN", log_msg);
     close(client_sock);
-
-    // Remove client from array
-    pthread_mutex_lock(&clients_mutex);
-    for (size_t i = 0; i < client_count; i++) {
-        if (clients[i].sock == client_sock) {
-            clients[i] = clients[client_count - 1];
-            client_count--;
-            snprintf(log_msg, sizeof(log_msg), "Unregistered client %s : %d (total: %zu)", 
-                     client->ip, client->port, client_count);
-            log_event("DEBUG", log_msg);
-            break;
-        }
-    }
-    pthread_mutex_unlock(&clients_mutex);
-
     free(client);
     return NULL;
 }
@@ -301,30 +176,30 @@ void simulate_war_test(Client *clients, size_t client_count) {
 
     char log_msg[1024];
     snprintf(log_msg, sizeof(log_msg), 
-             "Source:  %-10s  Type:  %-4s  Details:  %-20s  Threat Level:  %.2f  Location:  %s",
+             "Source: %s, Type: %s, Details: %s, Threat Level: %.2f, Location: %s",
              intel.source, intel.type, intel.data, intel.threat_level, intel.location);
     log_event("WAR_TEST", log_msg);
 
     if (intel.threat_level > 0.7) {
-        char command[512];
-        snprintf(command, sizeof(command), "command:launch|target:%s|details:%s", intel.location, intel.data);
-        char ciphertext[1024];
+        char command[256];
+        snprintf(command, sizeof(command), "command:launch|target:%s", intel.location);
+        char ciphertext[512];
         caesar_encrypt(command, ciphertext, sizeof(ciphertext));
-        snprintf(log_msg, sizeof(log_msg), "Encrypted Command:  %.1000s", ciphertext);
+        snprintf(log_msg, sizeof(log_msg), "Encrypted command: %.500s", ciphertext);
         log_event("COMMAND", log_msg);
-        snprintf(log_msg, sizeof(log_msg), "Decrypted Command:  %s", command);
+        snprintf(log_msg, sizeof(log_msg), "Decrypted command: %s", command);
         log_event("COMMAND", log_msg);
 
         for (size_t i = 0; i < client_count; i++) {
             if (clients[i].port == PORT_SILO || clients[i].port == PORT_SUB) {
                 if (send(clients[i].sock, ciphertext, strlen(ciphertext), 0) < 0) {
                     snprintf(log_msg, sizeof(log_msg), 
-                             "Failed to send command to %s : %d", 
+                             "Failed to send command to %s:%d", 
                              clients[i].ip, clients[i].port);
                     log_event("ERROR", log_msg);
                 } else {
                     snprintf(log_msg, sizeof(log_msg), 
-                             "Sent command to %s : %d", 
+                             "Sent command to %s:%d", 
                              clients[i].ip, clients[i].port);
                     log_event("COMMAND", log_msg);
                 }
@@ -403,20 +278,13 @@ int main(int argc, char *argv[]) {
             continue;
         }
 
-        Client *client = malloc(sizeof(Client));
-        if (!client) {
-            perror("Client allocation failed");
-            close(client_sock);
-            continue;
-        }
-        client->sock = client_sock;
-        client->port = ports[i];
-        inet_ntop(AF_INET, &client_addr.sin_addr, client->ip, sizeof(client->ip));
+        clients[client_count].sock = client_sock;
+        clients[client_count].port = ports[i];
+        inet_ntop(AF_INET, &client_addr.sin_addr, clients[client_count].ip, sizeof(clients[client_count].ip));
 
-        if (pthread_create(&threads[client_count], NULL, handle_client, client) != 0) {
+        if (pthread_create(&threads[client_count], NULL, handle_client, &clients[client_count]) != 0) {
             perror("Thread creation failed");
             close(client_sock);
-            free(client);
             continue;
         }
         client_count++;
@@ -428,7 +296,7 @@ int main(int argc, char *argv[]) {
 
     while (time(NULL) - start_time < SIMULATION_DURATION) {
         char log_msg[256];
-        snprintf(log_msg, sizeof(log_msg), "Simulation running,  %ld seconds remaining",
+        snprintf(log_msg, sizeof(log_msg), "Simulation running: %ld seconds remaining",
                  SIMULATION_DURATION - (time(NULL) - start_time));
         log_event("SIMULATION", log_msg);
         sleep(5);
@@ -439,12 +307,13 @@ int main(int argc, char *argv[]) {
     }
     for (size_t i = 0; i < client_count; i++) {
         pthread_join(threads[i], NULL);
+        close(clients[i].sock);
     }
     for (int i = 0; i < MAX_CLIENTS; i++) {
         close(server_socks[i]);
     }
 
-    log_event("SHUTDOWN", "Nuclear Control terminated after 2 minutes simulation");
+    log_event("SHUTDOWN", "Nuclear Control terminated after 30s simulation");
     return 0;
 }
 

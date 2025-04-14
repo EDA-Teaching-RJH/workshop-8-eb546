@@ -12,7 +12,7 @@
 #define SERVER_PORT 8081
 #define LOG_FILE "missileSilo.log"
 #define CAESAR_SHIFT 3
-#define SIMULATION_DURATION 120
+#define SIMULATION_DURATION 30
 
 void log_event(const char *event_type, const char *details) {
     FILE *fp = fopen(LOG_FILE, "a");
@@ -24,7 +24,7 @@ void log_event(const char *event_type, const char *details) {
     char *time_str = ctime(&now);
     if (time_str) {
         time_str[strlen(time_str) - 1] = '\0';
-        fprintf(fp, "[%s]  %-12s  %s\n", time_str, event_type, details);
+        fprintf(fp, "[%s] %-12s %s\n", time_str, event_type, details);
     }
     fclose(fp);
 }
@@ -41,7 +41,7 @@ void caesar_decrypt(const char *ciphertext, char *plaintext, size_t len) {
     }
 }
 
-int parse_command(const char *message, char *command, char *target, char *details) {
+int parse_command(const char *message, char *command, char *target) {
     char *copy = strdup(message);
     if (!copy) {
         log_event("ERROR", "Memory allocation failed for parsing");
@@ -50,7 +50,6 @@ int parse_command(const char *message, char *command, char *target, char *detail
 
     command[0] = '\0';
     target[0] = '\0';
-    details[0] = '\0';
     int valid = 1;
     char *token = strtok(copy, "|");
     while (token && valid) {
@@ -67,9 +66,6 @@ int parse_command(const char *message, char *command, char *target, char *detail
         } else if (strcmp(key, "target") == 0) {
             strncpy(target, value, 49);
             target[49] = '\0';
-        } else if (strcmp(key, "details") == 0) {
-            strncpy(details, value, 255);
-            details[255] = '\0';
         }
         token = strtok(NULL, "|");
     }
@@ -109,42 +105,37 @@ int main(void) {
     char plaintext[1024];
     char command[20];
     char target[50];
-    char details[256];
     char log_msg[2048];
     time_t start_time = time(NULL);
 
     while (time(NULL) - start_time < SIMULATION_DURATION) {
         ssize_t bytes = recv(sock, buffer, sizeof(buffer) - 1, 0);
         if (bytes <= 0) {
-            snprintf(log_msg, sizeof(log_msg), "Disconnected from Nuclear Control (bytes: %zd)", bytes);
-            log_event("CONNECTION", log_msg);
+            log_event("CONNECTION", "Disconnected from Control");
             break;
         }
         buffer[bytes] = '\0';
 
-        snprintf(log_msg, sizeof(log_msg), "Encrypted Message:  %.1000s", buffer);
+        snprintf(log_msg, sizeof(log_msg), "Encrypted message: %.1000s", buffer);
         log_event("MESSAGE", log_msg);
 
         caesar_decrypt(buffer, plaintext, sizeof(plaintext));
-        snprintf(log_msg, sizeof(log_msg), "Decrypted Message:  %.1000s", plaintext);
+        snprintf(log_msg, sizeof(log_msg), "Decrypted message: %.1000s", plaintext);
         log_event("MESSAGE", log_msg);
 
-        if (parse_command(plaintext, command, target, details)) {
+        if (parse_command(plaintext, command, target)) {
             if (strcmp(command, "launch") == 0) {
-                snprintf(log_msg, sizeof(log_msg), "Attacking Radar threat: %s at %s", details, target);
+                snprintf(log_msg, sizeof(log_msg), "Launch command received, Target: %s", target);
                 log_event("COMMAND", log_msg);
             } else {
                 snprintf(log_msg, sizeof(log_msg), "Unknown command: %s", command);
                 log_event("ERROR", log_msg);
             }
-        } else {
-            snprintf(log_msg, sizeof(log_msg), "Failed to parse command: %s", plaintext);
-            log_event("ERROR", log_msg);
         }
     }
 
     close(sock);
-    log_event("SHUTDOWN", "Missile Silo terminated after 2 minutes simulation");
+    log_event("SHUTDOWN", "Missile Silo terminated after 30s simulation");
     return 0;
 }
 

@@ -12,7 +12,7 @@
 #define SERVER_PORT 8084
 #define LOG_FILE "satellite.log"
 #define CAESAR_SHIFT 3
-#define SIMULATION_DURATION 120
+#define SIMULATION_DURATION 30
 
 void log_event(const char *event_type, const char *details) {
     FILE *fp = fopen(LOG_FILE, "a");
@@ -24,7 +24,7 @@ void log_event(const char *event_type, const char *details) {
     char *time_str = ctime(&now);
     if (time_str) {
         time_str[strlen(time_str) - 1] = '\0';
-        fprintf(fp, "[%s]  %-12s  %s\n", time_str, event_type, details);
+        fprintf(fp, "[%s] %-12s %s\n", time_str, event_type, details);
     }
     fclose(fp);
 }
@@ -47,7 +47,7 @@ void send_intel(int sock) {
     const char *locations[] = {"Arctic Ocean", "Mediterranean", "Barents Sea"};
     char message[512];
     int idx = rand() % 3;
-    double threat_level = 0.7 + (rand() % 30) / 100.0; // 0.7 to 0.99
+    double threat_level = 0.1 + (rand() % 90) / 100.0;
     snprintf(message, sizeof(message),
              "source:Satellite|type:%s|data:%s|threat_level:%.2f|location:%s",
              threat_types[idx % 2], threat_data[idx], threat_level, locations[idx]);
@@ -55,9 +55,9 @@ void send_intel(int sock) {
     caesar_encrypt(message, ciphertext, sizeof(ciphertext));
 
     char log_msg[2048];
-    snprintf(log_msg, sizeof(log_msg), "Encrypted Message:  %.1000s", ciphertext);
+    snprintf(log_msg, sizeof(log_msg), "Encrypted message: %.1000s", ciphertext);
     log_event("MESSAGE", log_msg);
-    snprintf(log_msg, sizeof(log_msg), "Original Message:  %.1000s", message);
+    snprintf(log_msg, sizeof(log_msg), "Original message: %.1000s", message);
     log_event("MESSAGE", log_msg);
 
     if (send(sock, ciphertext, strlen(ciphertext), 0) < 0) {
@@ -65,7 +65,7 @@ void send_intel(int sock) {
         return;
     }
     snprintf(log_msg, sizeof(log_msg), 
-             "Intelligence Sent:  Type:  %-4s,  Details:  %-15s,  Threat Level:  %.2f,  Location:  %s",
+             "Intelligence sent: Type: %s, Details: %s, Threat Level: %.2f, Location: %s",
              threat_types[idx % 2], threat_data[idx], threat_level, locations[idx]);
     log_event("INTEL", log_msg);
 }
@@ -101,6 +101,6 @@ int main(void) {
     }
 
     close(sock);
-    log_event("SHUTDOWN", "Satellite terminated after 2 minutes simulation");
+    log_event("SHUTDOWN", "Satellite terminated after 30s simulation");
     return 0;
 }
