@@ -14,9 +14,9 @@
 #define PORT_RADAR 8083
 #define PORT_SAT 8084
 #define MAX_CLIENTS 4
-#define LOG_FILE "nuclearControl.log"
+#define LOG_FILE "control.log"
 #define CAESAR_SHIFT 3
-#define SIMULATION_DURATION 30
+#define SIMULATION_DURATION 120
 
 typedef struct {
     char source[20];
@@ -81,16 +81,14 @@ int parse_intel(const char *message, Intel *intel) {
     memset(intel, 0, sizeof(Intel));
     char *token = strtok(copy, "|");
     int valid = 1;
-    char *fields[5] = {0}; // Store key-value pairs
+    char *fields[5] = {0};
     int field_count = 0;
 
-    // Collect all fields
     while (token && field_count < 5) {
         fields[field_count++] = token;
         token = strtok(NULL, "|");
     }
 
-    // Verify exactly 5 fields
     if (field_count != 5) {
         char log_msg[2048];
         snprintf(log_msg, sizeof(log_msg), "Incorrect field count:  %d fields in message:  %.1000s", 
@@ -100,7 +98,6 @@ int parse_intel(const char *message, Intel *intel) {
         return 0;
     }
 
-    // Parse each field
     for (int i = 0; i < 5 && valid; i++) {
         char *key = strtok(fields[i], ":");
         char *value = strtok(NULL, ":");
@@ -138,7 +135,6 @@ int parse_intel(const char *message, Intel *intel) {
         }
     }
 
-    // Final validation
     if (valid && (!intel->source[0] || !intel->type[0] || !intel->data[0] || !intel->location[0])) {
         char log_msg[2048];
         snprintf(log_msg, sizeof(log_msg), "Empty required field in message:  %.1000s", message);
@@ -191,7 +187,7 @@ void *handle_client(void *arg) {
         }
     }
 
-    snprintf(log_msg, sizeof(log_msg), "Client %s : %d terminated after 30 seconds simulation", 
+    snprintf(log_msg, sizeof(log_msg), "Client %s : %d terminated after 2 minutes simulation", 
              client->ip, client->port);
     log_event("SHUTDOWN", log_msg);
     close(client_sock);
@@ -351,6 +347,6 @@ int main(int argc, char *argv[]) {
         close(server_socks[i]);
     }
 
-    log_event("SHUTDOWN", "Nuclear Control terminated after 30 seconds simulation");
+    log_event("SHUTDOWN", "Nuclear Control terminated after 2 minutes simulation");
     return 0;
 }

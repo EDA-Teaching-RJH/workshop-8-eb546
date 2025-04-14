@@ -12,7 +12,7 @@
 #define SERVER_PORT 8082
 #define LOG_FILE "submarine.log"
 #define CAESAR_SHIFT 3
-#define SIMULATION_DURATION 30
+#define SIMULATION_DURATION 120
 
 void log_event(const char *event_type, const char *details) {
     FILE *fp = fopen(LOG_FILE, "a");
@@ -178,7 +178,7 @@ int main(void) {
     }
 
     close(sock);
-    log_event("SHUTDOWN", "Submarine terminated after 30 seconds simulation");
+    log_event("SHUTDOWN", "Submarine terminated after 2 minutes simulation");
     return 0;
 }
 
