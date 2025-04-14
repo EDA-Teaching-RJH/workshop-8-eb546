@@ -1,7 +1,0 @@
-===== Missile Silo Log =====
-Simulation Start: Mon Apr 14 19:47:24 2025
-==========================
-
-[Mon Apr 14 19:47:24 2025] STARTUP    Missile Silo System initializing
-[Mon Apr 14 19:47:24 2025] CONNECTION Connected to Nuclear Control
-[Mon Apr 14 19:47:31 2025] MESSAGE    Received: [Encrypted] frppdqg:odxqfk|wdujhw:Hqjolvk Fkdqqho -> [Decrypted] command:launch|target:English Channel
