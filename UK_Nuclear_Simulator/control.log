@@ -1,0 +1,35 @@
+[Mon Apr 14 13:05:40 2025]  STARTUP       Server started on port 8081
+[Mon Apr 14 13:05:40 2025]  STARTUP       Server started on port 8082
+[Mon Apr 14 13:05:40 2025]  STARTUP       Server started on port 8083
+[Mon Apr 14 13:05:40 2025]  STARTUP       Server started on port 8084
+[Mon Apr 14 13:05:58 2025]  CONNECTION    Client connected from 127.0.0.1 : 8081
+[Mon Apr 14 13:06:09 2025]  WAR_TEST      Source:  TEST        Type:  Sea   Details:  Ballistic Missile     Threat Level:  0.85  Location:  Norwegian Sea
+[Mon Apr 14 13:06:09 2025]  COMMAND       Encrypted Command:  frppdqg:odxqfk|wdujhw:Qruzhjldq Vhd
+[Mon Apr 14 13:06:09 2025]  COMMAND       Decrypted Command:  command:launch|target:Norwegian Sea
+[Mon Apr 14 13:06:09 2025]  COMMAND       Sent command to 127.0.0.1 : 8081
+[Mon Apr 14 13:06:09 2025]  COMMAND       Sent command to 127.0.0.1 : 8082
+[Mon Apr 14 13:06:09 2025]  SIMULATION    Simulation running,  1 seconds remaining
+[Mon Apr 14 13:06:09 2025]  CONNECTION    Client connected from 127.0.0.1 : 8082
+[Mon Apr 14 13:06:09 2025]  MESSAGE       Encrypted Message:  vrxufh:Vxepdulqh|wbsh:Vhd|gdwd:Wrushgr Odxqfk|wkuhdw_ohyho:0.26|orfdwlrq:Fhowlf Vhd
+[Mon Apr 14 13:06:09 2025]  MESSAGE       Decrypted Message:  source:Submarine|type:Sea|data:Torpedo Launch|threat_level:0.26|location:Celtic Sea
+[Mon Apr 14 13:06:09 2025]  ERROR         Invalid or incomplete intelligence message
+[Mon Apr 14 13:06:09 2025]  ERROR         Parse Failure:  source:Submarine|type:Sea|data:Torpedo Launch|threat_level:0.26|location:Celtic Sea
+[Mon Apr 14 13:06:09 2025]  CONNECTION    Client connected from 127.0.0.1 : 8083
+[Mon Apr 14 13:06:09 2025]  CONNECTION    Client connected from 127.0.0.1 : 8084
+[Mon Apr 14 13:06:09 2025]  MESSAGE       Encrypted Message:  vrxufh:Udgdu|wbsh:Dlu|gdwd:Plvvloh Vwulnh|wkuhdw_ohyho:0.26|orfdwlrq:Hqjolvk Fkdqqhovrxufh:Udgdu|wbsh:Dlu|gdwd:Hqhpb Dlufudiw|wkuhdw_ohyho:0.35|orfdwlrq:Qruwk Dwodqwlfvrxufh:Udgdu|wbsh:Dlu|gdwd:Gurqh Vzdup|wkuhdw_ohyho:0.35|orfdwlrq:Edowlf Vhdvrxufh:Udgdu|wbsh:Dlu|gdwd:Plvvloh Vwulnh|wkuhdw_ohyho:0.22|orfdwlrq:Hqjolvk Fkdqqho
+[Mon Apr 14 13:06:09 2025]  MESSAGE       Encrypted Message:  vrxufh:Vdwhoolwh|wbsh:Vhd|gdwd:Qdydo Iohhw|wkuhdw_ohyho:0.26|orfdwlrq:Phglwhuudqhdqvrxufh:Vdwhoolwh|wbsh:Dlu|gdwd:Edoolvwlf Plvvloh|wkuhdw_ohyho:0.35|orfdwlrq:Dufwlf Rfhdqvrxufh:Vdwhoolwh|wbsh:Dlu|gdwd:Vdwhoolwh Dqrpdob|wkuhdw_ohyho:0.35|orfdwlrq:Eduhqwv Vhdvrxufh:Vdwhoolwh|wbsh:Vhd|gdwd:Qdydo Iohhw|wkuhdw_ohyho:0.22|orfdwlrq:Phglwhuudqhdqvrxufh:Vdwhoolwh|wbsh:Dlu|gdwd:Edoolvwlf Plvvloh|wkuhdw_ohyho:0.11|orfdwlrq:Dufwlf Rfhdq
+[Mon Apr 14 13:06:09 2025]  MESSAGE       Decrypted Message:  source:Radar|type:Air|data:Missile Strike|threat_level:0.26|location:English Channelsource:Radar|type:Air|data:Enemy Aircraft|threat_level:0.35|location:North Atlanticsource:Radar|type:Air|data:Drone Swarm|threat_level:0.35|location:Baltic Seasource:Radar|type:Air|data:Missile Strike|threat_level:0.22|location:English Channel
+[Mon Apr 14 13:06:09 2025]  MESSAGE       Decrypted Message:  source:Satellite|type:Sea|data:Naval Fleet|threat_level:0.26|location:Mediterraneansource:Satellite|type:Air|data:Ballistic Missile|threat_level:0.35|location:Arctic Oceansource:Satellite|type:Air|data:Satellite Anomaly|threat_level:0.35|location:Barents Seasource:Satellite|type:Sea|data:Naval Fleet|threat_level:0.22|location:Mediterraneansource:Satellite|type:Air|data:Ballistic Missile|threat_level:0.11|location:Arctic Ocean
+[Mon Apr 14 13:06:09 2025]  ERROR         Invalid or incomplete intelligence message
+[Mon Apr 14 13:06:09 2025]  ERROR         Parse Failure:  source:Satellite|type:Sea|data:Naval Fleet|threat_level:0.26|location:Mediterraneansource:Satellite|type:Air|data:Ballistic Missile|threat_level:0.35|location:Arctic Oceansource:Satellite|type:Air|data:Satellite Anomaly|threat_level:0.35|location:Barents Seasource:Satellite|type:Sea|data:Naval Fleet|threat_level:0.22|location:Mediterraneansource:Satellite|type:Air|data:Ballistic Missile|threat_level:0.11|location:Arctic Ocean
+[Mon Apr 14 13:06:09 2025]  ERROR         Invalid or incomplete intelligence message
+[Mon Apr 14 13:06:09 2025]  ERROR         Parse Failure:  source:Radar|type:Air|data:Missile Strike|threat_level:0.26|location:English Channelsource:Radar|type:Air|data:Enemy Aircraft|threat_level:0.35|location:North Atlanticsource:Radar|type:Air|data:Drone Swarm|threat_level:0.35|location:Baltic Seasource:Radar|type:Air|data:Missile Strike|threat_level:0.22|location:English Channel
+[Mon Apr 14 13:06:10 2025]  MESSAGE       Encrypted Message:  vrxufh:Udgdu|wbsh:Dlu|gdwd:Hqhpb Dlufudiw|wkuhdw_ohyho:0.11|orfdwlrq:Qruwk Dwodqwlf
+[Mon Apr 14 13:06:10 2025]  MESSAGE       Decrypted Message:  source:Radar|type:Air|data:Enemy Aircraft|threat_level:0.11|location:North Atlantic
+[Mon Apr 14 13:06:10 2025]  ERROR         Invalid or incomplete intelligence message
+[Mon Apr 14 13:06:10 2025]  ERROR         Parse Failure:  source:Radar|type:Air|data:Enemy Aircraft|threat_level:0.11|location:North Atlantic
+[Mon Apr 14 13:06:11 2025]  MESSAGE       Encrypted Message:  vrxufh:Vdwhoolwh|wbsh:Dlu|gdwd:Vdwhoolwh Dqrpdob|wkuhdw_ohyho:0.77|orfdwlrq:Eduhqwv Vhd
+[Mon Apr 14 13:06:11 2025]  MESSAGE       Decrypted Message:  source:Satellite|type:Air|data:Satellite Anomaly|threat_level:0.77|location:Barents Sea
+[Mon Apr 14 13:06:11 2025]  ERROR         Invalid or incomplete intelligence message
+[Mon Apr 14 13:06:11 2025]  ERROR         Parse Failure:  source:Satellite|type:Air|data:Satellite Anomaly|threat_level:0.77|location:Barents Sea
+[Mon Apr 14 13:06:14 2025]  SHUTDOWN      Nuclear Control terminated after 30 seconds simulation

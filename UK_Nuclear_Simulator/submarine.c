@@ -24,7 +24,7 @@ void log_event(const char *event_type, const char *details) {
     char *time_str = ctime(&now);
     if (time_str) {
         time_str[strlen(time_str) - 1] = '\0';
-        fprintf(fp, "[%s] %-12s %s\n", time_str, event_type, details);
+        fprintf(fp, "[%s]  %-12s  %s\n", time_str, event_type, details);
     }
     fclose(fp);
 }
@@ -96,15 +96,15 @@ void send_intel(int sock) {
     int idx = rand() % 3;
     double threat_level = 0.1 + (rand() % 90) / 100.0;
     snprintf(message, sizeof(message),
-             "source:Submarine|type:Sea|data:%s|threat_level:%.2f|location:%s",
+             "SOURCE:Submarine|type:Sea|data:%s|threat_level:%.2f|location:%s",
              threat_data[idx], threat_level, locations[idx]);
     char ciphertext[1024];
     caesar_encrypt(message, ciphertext, sizeof(ciphertext));
 
     char log_msg[2048];
-    snprintf(log_msg, sizeof(log_msg), "Encrypted message: %.1000s", ciphertext);
+    snprintf(log_msg, sizeof(log_msg), "ENCRYPTED MESSAGE:  %.1000s", ciphertext);
     log_event("MESSAGE", log_msg);
-    snprintf(log_msg, sizeof(log_msg), "Original message: %.1000s", message);
+    snprintf(log_msg, sizeof(log_msg), "ORIGINAL MESSAGE:  %.1000s", message);
     log_event("MESSAGE", log_msg);
 
     if (send(sock, ciphertext, strlen(ciphertext), 0) < 0) {
@@ -112,7 +112,7 @@ void send_intel(int sock) {
         return;
     }
     snprintf(log_msg, sizeof(log_msg), 
-             "Intelligence sent: Type: Sea, Details: %s, Threat Level: %.2f, Location: %s",
+             "INTELLIGENCE SENT:  Type:  Sea,  Details:  %-15s,  Threat Level:  %.2f,  Location:  %s",
              threat_data[idx], threat_level, locations[idx]);
     log_event("INTEL", log_msg);
 }
@@ -153,24 +153,24 @@ int main(void) {
 
         ssize_t bytes = recv(sock, buffer, sizeof(buffer) - 1, 0);
         if (bytes <= 0) {
-            log_event("CONNECTION", "Disconnected from Control");
+            log_event("CONNECTION", "Disconnected from Nuclear Control");
             break;
         }
         buffer[bytes] = '\0';
 
-        snprintf(log_msg, sizeof(log_msg), "Encrypted message: %.1000s", buffer);
+        snprintf(log_msg, sizeof(log_msg), "ENCRYPTED MESSAGE:  %.1000s", buffer);
         log_event("MESSAGE", log_msg);
 
         caesar_decrypt(buffer, plaintext, sizeof(plaintext));
-        snprintf(log_msg, sizeof(log_msg), "Decrypted message: %.1000s", plaintext);
+        snprintf(log_msg, sizeof(log_msg), "DECRYPTED MESSAGE:  %.1000s", plaintext);
         log_event("MESSAGE", log_msg);
 
         if (parse_command(plaintext, command, target)) {
             if (strcmp(command, "launch") == 0) {
-                snprintf(log_msg, sizeof(log_msg), "Launch command received, Target: %s", target);
+                snprintf(log_msg, sizeof(log_msg), "Launch Command:  Target = %s", target);
                 log_event("COMMAND", log_msg);
             } else {
-                snprintf(log_msg, sizeof(log_msg), "Unknown command: %s", command);
+                snprintf(log_msg, sizeof(log_msg), "Unknown Command:  %s", command);
                 log_event("ERROR", log_msg);
             }
         }
@@ -178,7 +178,7 @@ int main(void) {
     }
 
     close(sock);
-    log_event("SHUTDOWN", "Submarine terminated after 30s simulation");
+    log_event("SHUTDOWN", "Submarine terminated after 30 seconds simulation!");
     return 0;
 }
 

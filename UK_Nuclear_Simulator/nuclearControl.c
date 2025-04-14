@@ -14,7 +14,7 @@
 #define PORT_RADAR 8083
 #define PORT_SAT 8084
 #define MAX_CLIENTS 4
-#define LOG_FILE "control.log"
+#define LOG_FILE "nuclearControl.log"
 #define CAESAR_SHIFT 3
 #define SIMULATION_DURATION 30
 
@@ -42,7 +42,7 @@ void log_event(const char *event_type, const char *details) {
     char *time_str = ctime(&now);
     if (time_str) {
         time_str[strlen(time_str) - 1] = '\0';
-        fprintf(fp, "[%s] %-12s %s\n", time_str, event_type, details);
+        fprintf(fp, "[%s]  %-12s  %s\n", time_str, event_type, details);
     }
     fclose(fp);
 }
@@ -74,40 +74,61 @@ void caesar_decrypt(const char *ciphertext, char *plaintext, size_t len) {
 int parse_intel(const char *message, Intel *intel) {
     char *copy = strdup(message);
     if (!copy) {
-        log_event("ERROR", "Memory allocation failed for parsing");
+        log_event("ERROR", "Memory allocation failed for parsing intelligence");
         return 0;
     }
 
     memset(intel, 0, sizeof(Intel));
     char *token = strtok(copy, "|");
+    int fields = 0;
     int valid = 1;
+    char log_msg[2048];
+
     while (token && valid) {
         char *key = strtok(token, ":");
         char *value = strtok(NULL, ":");
         if (!key || !value) {
-            log_event("ERROR", "Malformed key-value pair");
+            snprintf(log_msg, sizeof(log_msg), "Invalid key-value pair in message:  %.1000s", token ? token : "null");
+            log_event("ERROR", log_msg);
             valid = 0;
             break;
         }
         if (strcmp(key, "source") == 0) {
             strncpy(intel->source, value, sizeof(intel->source) - 1);
+            fields++;
         } else if (strcmp(key, "type") == 0) {
             strncpy(intel->type, value, sizeof(intel->type) - 1);
+            fields++;
         } else if (strcmp(key, "data") == 0) {
             strncpy(intel->data, value, sizeof(intel->data) - 1);
+            fields++;
         } else if (strcmp(key, "threat_level") == 0) {
             char *endptr;
             intel->threat_level = strtod(value, &endptr);
-            if (*endptr != '\0') valid = 0;
+            if (*endptr != '\0' || intel->threat_level < 0.0 || intel->threat_level > 1.0) {
+                snprintf(log_msg, sizeof(log_msg), "Invalid threat level in message:  %s", value);
+                log_event("ERROR", log_msg);
+                valid = 0;
+            }
+            fields++;
         } else if (strcmp(key, "location") == 0) {
             strncpy(intel->location, value, sizeof(intel->location) - 1);
+            fields++;
         }
         token = strtok(NULL, "|");
     }
-    if (!valid || !intel->source[0] || !intel->type[0]) {
-        log_event("ERROR", "Invalid or incomplete intelligence");
+
+    if (valid && fields != 5) {
+        snprintf(log_msg, sizeof(log_msg), "Incomplete intelligence message,  %d fields received", fields);
+        log_event("ERROR", log_msg);
         valid = 0;
     }
+    if (valid && (!intel->source[0] || !intel->type[0])) {
+        snprintf(log_msg, sizeof(log_msg), "Missing source or type in message:  %.1000s", message);
+        log_event("ERROR", log_msg);
+        valid = 0;
+    }
+
     free(copy);
     return valid;
 }
@@ -118,9 +139,9 @@ void *handle_client(void *arg) {
     char buffer[1024];
     char plaintext[1024];
     Intel intel;
-    char log_msg[2048]; // Increased buffer size
+    char log_msg[2048];
 
-    snprintf(log_msg, sizeof(log_msg), "Client connected from %s:%d", 
+    snprintf(log_msg, sizeof(log_msg), "Client connected from %s : %d", 
              client->ip, client->port);
     log_event("CONNECTION", log_msg);
 
@@ -128,32 +149,32 @@ void *handle_client(void *arg) {
     while (time(NULL) - start_time < SIMULATION_DURATION) {
         ssize_t bytes = recv(client_sock, buffer, sizeof(buffer) - 1, 0);
         if (bytes <= 0) {
-            snprintf(log_msg, sizeof(log_msg), "Client %s:%d disconnected", 
+            snprintf(log_msg, sizeof(log_msg), "Client %s : %d disconnected", 
                      client->ip, client->port);
             log_event("CONNECTION", log_msg);
             break;
         }
         buffer[bytes] = '\0';
 
-        snprintf(log_msg, sizeof(log_msg), "Encrypted message: %.1000s", buffer);
+        snprintf(log_msg, sizeof(log_msg), "ENCRYPTED MESSAGE:  %.1000s", buffer);
         log_event("MESSAGE", log_msg);
 
         caesar_decrypt(buffer, plaintext, sizeof(plaintext));
-        snprintf(log_msg, sizeof(log_msg), "Decrypted message: %.1000s", plaintext);
+        snprintf(log_msg, sizeof(log_msg), "DECRYPTED MESSAGE:  %.1000s", plaintext);
         log_event("MESSAGE", log_msg);
 
         if (parse_intel(plaintext, &intel)) {
             snprintf(log_msg, sizeof(log_msg), 
-                     "Source: %s, Type: %s, Details: %s, Threat Level: %.2f, Location: %s",
+                     "Source:  %-10s  Type:  %-4s  Details:  %-20s  Threat Level:  %.2f  Location:  %s",
                      intel.source, intel.type, intel.data, intel.threat_level, intel.location);
             log_event("THREAT", log_msg);
         } else {
-            snprintf(log_msg, sizeof(log_msg), "Failed to parse: %.1000s", plaintext);
+            snprintf(log_msg, sizeof(log_msg), "Failed to parse message:  %.1000s", plaintext);
             log_event("ERROR", log_msg);
         }
     }
 
-    snprintf(log_msg, sizeof(log_msg), "Client %s:%d terminated after 30s simulation", 
+    snprintf(log_msg, sizeof(log_msg), "Client %s : %d terminated after 30 seconds simulation", 
              client->ip, client->port);
     log_event("SHUTDOWN", log_msg);
     close(client_sock);
@@ -176,7 +197,7 @@ void simulate_war_test(Client *clients, size_t client_count) {
 
     char log_msg[1024];
     snprintf(log_msg, sizeof(log_msg), 
-             "Source: %s, Type: %s, Details: %s, Threat Level: %.2f, Location: %s",
+             "Source:  %-10s  Type:  %-4s  Details:  %-20s  Threat Level:  %.2f  Location:  %s",
              intel.source, intel.type, intel.data, intel.threat_level, intel.location);
     log_event("WAR_TEST", log_msg);
 
@@ -185,21 +206,21 @@ void simulate_war_test(Client *clients, size_t client_count) {
         snprintf(command, sizeof(command), "command:launch|target:%s", intel.location);
         char ciphertext[512];
         caesar_encrypt(command, ciphertext, sizeof(ciphertext));
-        snprintf(log_msg, sizeof(log_msg), "Encrypted command: %.500s", ciphertext);
+        snprintf(log_msg, sizeof(log_msg), "ENCRYPTED COMMAND:  %.500s", ciphertext);
         log_event("COMMAND", log_msg);
-        snprintf(log_msg, sizeof(log_msg), "Decrypted command: %s", command);
+        snprintf(log_msg, sizeof(log_msg), "DECRYPTED COMMAND:  %s", command);
         log_event("COMMAND", log_msg);
 
         for (size_t i = 0; i < client_count; i++) {
             if (clients[i].port == PORT_SILO || clients[i].port == PORT_SUB) {
                 if (send(clients[i].sock, ciphertext, strlen(ciphertext), 0) < 0) {
                     snprintf(log_msg, sizeof(log_msg), 
-                             "Failed to send command to %s:%d", 
+                             "Failed to send command to %s : %d", 
                              clients[i].ip, clients[i].port);
                     log_event("ERROR", log_msg);
                 } else {
                     snprintf(log_msg, sizeof(log_msg), 
-                             "Sent command to %s:%d", 
+                             "Sent command to %s : %d", 
                              clients[i].ip, clients[i].port);
                     log_event("COMMAND", log_msg);
                 }
@@ -296,7 +317,7 @@ int main(int argc, char *argv[]) {
 
     while (time(NULL) - start_time < SIMULATION_DURATION) {
         char log_msg[256];
-        snprintf(log_msg, sizeof(log_msg), "Simulation running: %ld seconds remaining",
+        snprintf(log_msg, sizeof(log_msg), "Simulation running,  %ld seconds remaining",
                  SIMULATION_DURATION - (time(NULL) - start_time));
         log_event("SIMULATION", log_msg);
         sleep(5);
@@ -313,7 +334,7 @@ int main(int argc, char *argv[]) {
         close(server_socks[i]);
     }
 
-    log_event("SHUTDOWN", "Nuclear Control terminated after 30s simulation");
+    log_event("SHUTDOWN", "Nuclear Control terminated after 30 seconds simulation!");
     return 0;
 }
 
