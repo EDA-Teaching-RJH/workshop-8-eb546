@@ -10,15 +10,18 @@
 
 #define SERVER_IP "127.0.0.1"
 #define SERVER_PORT 8081
-#define LOG_FILE "missile_silo.log"
+#define LOG_FILE "missileSilo.log"
 #define CAESAR_SHIFT 3
 #define SIMULATION_DURATION 120
+#define BUFFER_SIZE 1024
+#define LOG_MSG_SIZE 2048
 
-void init_log_file() {
+void init_log_file(void) {
     FILE *fp = fopen(LOG_FILE, "w");
     if (fp) {
+        time_t now = time(NULL);
         fprintf(fp, "===== Missile Silo Log =====\n");
-        fprintf(fp, "Simulation Start: %s", ctime(time(NULL)));
+        fprintf(fp, "Simulation Start: %s", ctime(&now));
         fprintf(fp, "==========================\n\n");
         fclose(fp);
     }
@@ -27,7 +30,7 @@ void init_log_file() {
 void log_event(const char *event_type, const char *details) {
     FILE *fp = fopen(LOG_FILE, "a");
     if (!fp) {
-        perror("Failed to open log file");
+        fprintf(stderr, "Failed to open log file: %s\n", LOG_FILE);
         return;
     }
     time_t now = time(NULL);
@@ -94,7 +97,7 @@ int main(void) {
 
     int sock = socket(AF_INET, SOCK_STREAM, 0);
     if (sock < 0) {
-        log_event("ERROR", "Failed to create socket");
+        log_event("ERROR", "Socket creation failed");
         return 1;
     }
 
@@ -108,18 +111,18 @@ int main(void) {
     }
 
     if (connect(sock, (struct sockaddr *)&server_addr, sizeof(server_addr)) < 0) {
-        log_event("ERROR", "Failed to connect to Nuclear Control");
+        log_event("ERROR", "Connection to Nuclear Control failed");
         close(sock);
         return 1;
     }
 
     log_event("CONNECTION", "Connected to Nuclear Control");
 
-    char buffer[1024];
-    char plaintext[1024];
+    char buffer[BUFFER_SIZE];
+    char plaintext[BUFFER_SIZE];
     char command[20];
     char target[50];
-    char log_msg[2048];
+    char log_msg[LOG_MSG_SIZE];
     time_t start_time = time(NULL);
 
     while (time(NULL) - start_time < SIMULATION_DURATION) {
@@ -131,7 +134,7 @@ int main(void) {
         buffer[bytes] = '\0';
 
         caesar_decrypt(buffer, plaintext, sizeof(plaintext));
-        snprintf(log_msg, sizeof(log_msg), "Received: [Encrypted] %s -> [Decrypted] %s", 
+        snprintf(log_msg, sizeof(log_msg), "Received: [Encrypted] %.1000s -> [Decrypted] %.1000s",
                  buffer, plaintext);
         log_event("MESSAGE", log_msg);
 
@@ -144,7 +147,7 @@ int main(void) {
                 log_event("ERROR", log_msg);
             }
         }
-        usleep(500000); // 0.5s delay to prevent busy-waiting
+        usleep(500000); // 0.5s polling
     }
 
     close(sock);

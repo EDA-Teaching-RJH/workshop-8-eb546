@@ -13,13 +13,16 @@
 #define LOG_FILE "submarine.log"
 #define CAESAR_SHIFT 3
 #define SIMULATION_DURATION 120
+#define BUFFER_SIZE 1024
+#define LOG_MSG_SIZE 2048
 
-void init_log_file() {
+void init_log_file(void) {
     FILE *fp = fopen(LOG_FILE, "w");
     if (fp) {
+        time_t now = time(NULL);
         fprintf(fp, "===== Submarine Log =====\n");
-        fprintf(fp, "Simulation Start: %s", ctime(time(NULL)));
-        fprintf(fp, "========================\n\n");
+        fprintf(fp, "Simulation Start: %s", ctime(&now));
+        fprintf(fp, "=======================\n\n");
         fclose(fp);
     }
 }
@@ -27,7 +30,7 @@ void init_log_file() {
 void log_event(const char *event_type, const char *details) {
     FILE *fp = fopen(LOG_FILE, "a");
     if (!fp) {
-        perror("Failed to open log file");
+        fprintf(stderr, "Failed to open log file: %s\n", LOG_FILE);
         return;
     }
     time_t now = time(NULL);
@@ -100,11 +103,11 @@ int parse_command(const char *message, char *command, char *target) {
 }
 
 void send_intel(int sock) {
-    const char *threat_data[] = {"Enemy Submarine", "Torpedo Launch", "Naval Fleet"};
-    const char *locations[] = {"Norwegian Sea", "Celtic Sea", "Irish Sea"};
+    const char *const threat_data[] = {"Enemy Submarine", "Torpedo Launch", "Naval Fleet"};
+    const char *const locations[] = {"Norwegian Sea", "Celtic Sea", "Irish Sea"};
     char message[512];
-    char ciphertext[1024];
-    char log_msg[2048];
+    char ciphertext[BUFFER_SIZE];
+    char log_msg[LOG_MSG_SIZE];
     int idx = rand() % 3;
     double threat_level = 0.1 + (rand() % 90) / 100.0;
 
@@ -113,8 +116,8 @@ void send_intel(int sock) {
              threat_data[idx], threat_level, locations[idx]);
     caesar_encrypt(message, ciphertext, sizeof(ciphertext));
 
-    snprintf(log_msg, sizeof(log_msg), 
-             "Sending Intelligence: Type=Sea, Details=%s, ThreatLevel=%.2f, Location=%s, [Encrypted] %s",
+    snprintf(log_msg, sizeof(log_msg),
+             "Sending Intelligence: Type=Sea, Details=%s, ThreatLevel=%.2f, Location=%s, [Encrypted] %.1000s",
              threat_data[idx], threat_level, locations[idx], ciphertext);
     log_event("INTEL", log_msg);
 
@@ -130,7 +133,7 @@ int main(void) {
 
     int sock = socket(AF_INET, SOCK_STREAM, 0);
     if (sock < 0) {
-        log_event("ERROR", "Failed to create socket");
+        log_event("ERROR", "Socket creation failed");
         return 1;
     }
 
@@ -144,18 +147,18 @@ int main(void) {
     }
 
     if (connect(sock, (struct sockaddr *)&server_addr, sizeof(server_addr)) < 0) {
-        log_event("ERROR", "Failed to connect to Nuclear Control");
+        log_event("ERROR", "Connection to Nuclear Control failed");
         close(sock);
         return 1;
     }
 
     log_event("CONNECTION", "Connected to Nuclear Control");
 
-    char buffer[1024];
-    char plaintext[1024];
+    char buffer[BUFFER_SIZE];
+    char plaintext[BUFFER_SIZE];
     char command[20];
     char target[50];
-    char log_msg[2048];
+    char log_msg[LOG_MSG_SIZE];
     time_t start_time = time(NULL);
 
     while (time(NULL) - start_time < SIMULATION_DURATION) {
@@ -169,7 +172,7 @@ int main(void) {
         buffer[bytes] = '\0';
 
         caesar_decrypt(buffer, plaintext, sizeof(plaintext));
-        snprintf(log_msg, sizeof(log_msg), "Received: [Encrypted] %s -> [Decrypted] %s", 
+        snprintf(log_msg, sizeof(log_msg), "Received: [Encrypted] %.1000s -> [Decrypted] %.1000s",
                  buffer, plaintext);
         log_event("MESSAGE", log_msg);
 
@@ -182,10 +185,11 @@ int main(void) {
                 log_event("ERROR", log_msg);
             }
         }
-        sleep(10); // Adjusted for longer duration
+        sleep(10);
     }
 
     close(sock);
     log_event("SHUTDOWN", "Submarine System terminated");
     return 0;
 }
+

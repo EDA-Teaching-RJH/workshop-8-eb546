@@ -13,13 +13,16 @@
 #define LOG_FILE "radar.log"
 #define CAESAR_SHIFT 3
 #define SIMULATION_DURATION 120
+#define BUFFER_SIZE 1024
+#define LOG_MSG_SIZE 2048
 
-void init_log_file() {
+void init_log_file(void) {
     FILE *fp = fopen(LOG_FILE, "w");
     if (fp) {
+        time_t now = time(NULL);
         fprintf(fp, "===== Radar Log =====\n");
-        fprintf(fp, "Simulation Start: %s", ctime(time(NULL)));
-        fprintf(fp, "=====================\n\n");
+        fprintf(fp, "Simulation Start: %s", ctime(&now));
+        fprintf(fp, "====================\n\n");
         fclose(fp);
     }
 }
@@ -27,7 +30,7 @@ void init_log_file() {
 void log_event(const char *event_type, const char *details) {
     FILE *fp = fopen(LOG_FILE, "a");
     if (!fp) {
-        perror("Failed to open log file");
+        fprintf(stderr, "Failed to open log file: %s\n", LOG_FILE);
         return;
     }
     time_t now = time(NULL);
@@ -52,11 +55,11 @@ void caesar_encrypt(const char *plaintext, char *ciphertext, size_t len) {
 }
 
 void send_intel(int sock) {
-    const char *threat_data[] = {"Enemy Aircraft", "Missile Strike", "Drone Swarm"};
-    const char *locations[] = {"North Atlantic", "English Channel", "Baltic Sea"};
+    const char *const threat_data[] = {"Enemy Aircraft", "Missile Strike", "Drone Swarm"};
+    const char *const locations[] = {"North Atlantic", "English Channel", "Baltic Sea"};
     char message[512];
-    char ciphertext[1024];
-    char log_msg[2048];
+    char ciphertext[BUFFER_SIZE];
+    char log_msg[LOG_MSG_SIZE];
     int idx = rand() % 3;
     double threat_level = 0.1 + (rand() % 90) / 100.0;
 
@@ -65,8 +68,8 @@ void send_intel(int sock) {
              threat_data[idx], threat_level, locations[idx]);
     caesar_encrypt(message, ciphertext, sizeof(ciphertext));
 
-    snprintf(log_msg, sizeof(log_msg), 
-             "Sending Intelligence: Type=Air, Details=%s, ThreatLevel=%.2f, Location=%s, [Encrypted] %s",
+    snprintf(log_msg, sizeof(log_msg),
+             "Sending Intelligence: Type=Air, Details=%s, ThreatLevel=%.2f, Location=%s, [Encrypted] %.1000s",
              threat_data[idx], threat_level, locations[idx], ciphertext);
     log_event("INTEL", log_msg);
 
@@ -82,7 +85,7 @@ int main(void) {
 
     int sock = socket(AF_INET, SOCK_STREAM, 0);
     if (sock < 0) {
-        log_event("ERROR", "Failed to create socket");
+        log_event("ERROR", "Socket creation failed");
         return 1;
     }
 
@@ -96,7 +99,7 @@ int main(void) {
     }
 
     if (connect(sock, (struct sockaddr *)&server_addr, sizeof(server_addr)) < 0) {
-        log_event("ERROR", "Failed to connect to Nuclear Control");
+        log_event("ERROR", "Connection to Nuclear Control failed");
         close(sock);
         return 1;
     }
@@ -106,10 +109,11 @@ int main(void) {
     time_t start_time = time(NULL);
     while (time(NULL) - start_time < SIMULATION_DURATION) {
         send_intel(sock);
-        sleep(10); // Adjusted for longer duration
+        sleep(10);
     }
 
     close(sock);
     log_event("SHUTDOWN", "Radar System terminated");
     return 0;
 }
+
