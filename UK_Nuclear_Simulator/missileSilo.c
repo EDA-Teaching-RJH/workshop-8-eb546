@@ -68,30 +68,23 @@ int parse_command(const char *message, char *command, char *target) {
 
     command[0] = '\0';
     target[0] = '\0';
-    int valid = 1;
     char *token = strtok(copy, "|");
-    while (token && valid) {
+    while (token) {
         char *key = strtok(token, ":");
         char *value = strtok(NULL, ":");
-        if (!key || !value) {
-            valid = 0;
-            break;
-        }
-        if (strcmp(key, "command") == 0) {
-            strncpy(command, value, 19);
-            command[19] = '\0';
-        } else if (strcmp(key, "target") == 0) {
-            strncpy(target, value, 49);
-            target[49] = '\0';
+        if (key && value) {
+            if (strcmp(key, "command") == 0) {
+                strncpy(command, value, 19);
+                command[19] = '\0';
+            } else if (strcmp(key, "target") == 0) {
+                strncpy(target, value, 49);
+                target[49] = '\0';
+            }
         }
         token = strtok(NULL, "|");
     }
-    if (!valid || !command[0]) {
-        free(copy);
-        return 0;
-    }
     free(copy);
-    return 1;
+    return (command[0] != '\0' && target[0] != '\0');
 }
 
 int main(void) {
@@ -146,7 +139,7 @@ int main(void) {
         buffer[bytes] = '\0';
 
         caesar_decrypt(buffer, plaintext, sizeof(plaintext));
-        snprintf(log_msg, sizeof(log_msg), "Received: [Encrypted] %.1000s -> [Decrypted] %.1000s",
+        snprintf(log_msg, sizeof(log_msg), "Received: [Encrypted] %s -> [Decrypted] %s",
                  buffer, plaintext);
         log_event("MESSAGE", log_msg);
 
@@ -159,7 +152,7 @@ int main(void) {
                 log_event("ERROR", log_msg);
             }
         } else {
-            snprintf(log_msg, sizeof(log_msg), "Invalid message format: %.1000s", plaintext);
+            snprintf(log_msg, sizeof(log_msg), "Invalid message format: %s", plaintext);
             log_event("ERROR", log_msg);
         }
         usleep(500000);

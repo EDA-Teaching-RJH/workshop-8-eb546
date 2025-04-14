@@ -22,7 +22,7 @@ typedef struct {
     char source[20];
     char type[20];
     char data[256];
-    int threat_level; // Changed to int
+    int threat_level;
     char location[50];
 } Intel;
 
@@ -83,8 +83,8 @@ int parse_intel(const char *message, Intel *intel) {
     }
 
     memset(intel, 0, sizeof(Intel));
+    int has_source = 0, has_type = 0, has_data = 0, has_threat = 0, has_location = 0;
     char *token = strtok(copy, "|");
-    int has_source = 0, has_type = 0;
     while (token) {
         char *key = strtok(token, ":");
         char *value = strtok(NULL, ":");
@@ -100,20 +100,23 @@ int parse_intel(const char *message, Intel *intel) {
             has_type = 1;
         } else if (strcmp(key, "data") == 0) {
             strncpy(intel->data, value, sizeof(intel->data) - 1);
+            has_data = 1;
         } else if (strcmp(key, "threat_level") == 0) {
             char *endptr;
             intel->threat_level = (int)strtol(value, &endptr, 10);
-            if (*endptr != '\0') {
+            if (*endptr != '\0' || intel->threat_level < 0) {
                 free(copy);
                 return 0;
             }
+            has_threat = 1;
         } else if (strcmp(key, "location") == 0) {
             strncpy(intel->location, value, sizeof(intel->location) - 1);
+            has_location = 1;
         }
         token = strtok(NULL, "|");
     }
     free(copy);
-    return (has_source && has_type);
+    return (has_source && has_type && has_data && has_threat && has_location);
 }
 
 void send_command_to_clients(const char *location) {
@@ -123,7 +126,7 @@ void send_command_to_clients(const char *location) {
     snprintf(command, sizeof(command), "command:launch|target:%s", location);
     caesar_encrypt(command, ciphertext, sizeof(ciphertext));
 
-    snprintf(log_msg, sizeof(log_msg), "Encrypted command: %.500s", ciphertext);
+    snprintf(log_msg, sizeof(log_msg), "Encrypted command: %s", ciphertext);
     log_event("COMMAND", log_msg);
     snprintf(log_msg, sizeof(log_msg), "Decrypted command: %s", command);
     log_event("COMMAND", log_msg);
@@ -168,11 +171,11 @@ void *handle_client(void *arg) {
         }
         buffer[bytes] = '\0';
 
-        snprintf(log_msg, sizeof(log_msg), "Encrypted message: %.1000s", buffer);
+        snprintf(log_msg, sizeof(log_msg), "Encrypted message: %s", buffer);
         log_event("MESSAGE", log_msg);
 
         caesar_decrypt(buffer, plaintext, sizeof(plaintext));
-        snprintf(log_msg, sizeof(log_msg), "Decrypted message: %.1000s", plaintext);
+        snprintf(log_msg, sizeof(log_msg), "Decrypted message: %s", plaintext);
         log_event("MESSAGE", log_msg);
 
         if (parse_intel(plaintext, &intel)) {
@@ -186,14 +189,14 @@ void *handle_client(void *arg) {
                 send_command_to_clients(intel.location);
             }
         } else {
-            snprintf(log_msg, sizeof(log_msg), "Invalid message: %.1000s", plaintext);
+            snprintf(log_msg, sizeof(log_msg), "Invalid message: %s", plaintext);
             log_event("ERROR", log_msg);
         }
     }
 
-    snprintf(log_msg, sizeof(log_msg), "Client %s:%d terminated after 60s simulation", 
+    snprintf(log_msg, sizeof(log_msg), "Client %s:%d disconnected", 
              client->ip, client->port);
-    log_event("SHUTDOWN", log_msg);
+    log_event("CONNECTION", log_msg);
     close(client_sock);
     free(client);
     return NULL;
@@ -209,7 +212,7 @@ void simulate_war_test(Client *clients, size_t client_count) {
     int idx = rand() % 4;
     snprintf(intel.type, sizeof(intel.type), "%s", threat_types[idx % 2]);
     snprintf(intel.data, sizeof(intel.data), "%s", threat_data[idx]);
-    intel.threat_level = 10 + (rand() % 91); // Whole number 10-100
+    intel.threat_level = 10 + (rand() % 91);
     snprintf(intel.location, sizeof(intel.location), "%s", locations[rand() % 4]);
 
     char log_msg[1024];
@@ -271,6 +274,15 @@ int main(int argc, char *argv[]) {
     int server_socks[MAX_CLIENTS];
     pthread_t threads[MAX_CLIENTS];
     time_t start_time = time(NULL);
+
+    FILE *fp = fopen(LOG_FILE, "w");
+    if (fp) {
+        time_t now = time(NULL);
+        fprintf(fp, "===== Nuclear Control Log =====\n");
+        fprintf(fp, "Simulation Start: %s", ctime(&now));
+        fprintf(fp, "=============================\n\n");
+        fclose(fp);
+    }
 
     for (int i = 0; i < MAX_CLIENTS; i++) {
         server_socks[i] = start_server(ports[i]);

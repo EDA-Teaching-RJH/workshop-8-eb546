@@ -61,7 +61,7 @@ void send_intel(int sock) {
     char ciphertext[BUFFER_SIZE];
     char log_msg[LOG_MSG_SIZE];
     int idx = rand() % 3;
-    int threat_level = 10 + (rand() % 91); // Whole number 10-100
+    int threat_level = 10 + (rand() % 91);
 
     snprintf(message, sizeof(message),
              "source:Radar|type:Air|data:%s|threat_level:%d|location:%s",
@@ -69,7 +69,7 @@ void send_intel(int sock) {
     caesar_encrypt(message, ciphertext, sizeof(ciphertext));
 
     snprintf(log_msg, sizeof(log_msg),
-             "Sending Intelligence: Type=Air, Details=%s, ThreatLevel=%d, Location=%s, [Encrypted] %.1000s",
+             "Sending Intelligence: Type=Air, Details=%s, ThreatLevel=%d, Location=%s, [Encrypted] %s",
              threat_data[idx], threat_level, locations[idx], ciphertext);
     log_event("INTEL", log_msg);
 
