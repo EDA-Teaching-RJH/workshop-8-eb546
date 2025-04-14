@@ -162,7 +162,7 @@ int main(void) {
             snprintf(log_msg, sizeof(log_msg), "Invalid message format: %.1000s", plaintext);
             log_event("ERROR", log_msg);
         }
-        usleep(500000); // 0.5s polling
+        usleep(500000);
     }
 
     close(sock);

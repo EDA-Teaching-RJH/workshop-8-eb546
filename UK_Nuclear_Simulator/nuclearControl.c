@@ -22,7 +22,7 @@ typedef struct {
     char source[20];
     char type[20];
     char data[256];
-    double threat_level;
+    int threat_level; // Changed to int
     char location[50];
 } Intel;
 
@@ -32,7 +32,7 @@ typedef struct {
     int port;
 } Client;
 
-static Client clients[MAX_CLIENTS]; // Store clients for sending commands
+static Client clients[MAX_CLIENTS];
 static size_t client_count = 0;
 static pthread_mutex_t clients_mutex = PTHREAD_MUTEX_INITIALIZER;
 
@@ -102,7 +102,7 @@ int parse_intel(const char *message, Intel *intel) {
             strncpy(intel->data, value, sizeof(intel->data) - 1);
         } else if (strcmp(key, "threat_level") == 0) {
             char *endptr;
-            intel->threat_level = strtod(value, &endptr);
+            intel->threat_level = (int)strtol(value, &endptr, 10);
             if (*endptr != '\0') {
                 free(copy);
                 return 0;
@@ -177,18 +177,17 @@ void *handle_client(void *arg) {
 
         if (parse_intel(plaintext, &intel)) {
             snprintf(log_msg, sizeof(log_msg), 
-                     "Source: %s, Type: %s, Details: %s, Threat Level: %.2f, Location: %s",
+                     "Source: %s, Type: %s, Details: %s, Threat Level: %d, Location: %s",
                      intel.source, intel.type, intel.data, intel.threat_level, intel.location);
             log_event("THREAT", log_msg);
 
-            // Send launch command for high-threat intel from Radar or Satellite
-            if (intel.threat_level > 0.7 && 
+            if (intel.threat_level > 70 && 
                 (strcmp(intel.source, "Radar") == 0 || strcmp(intel.source, "Satellite") == 0)) {
                 send_command_to_clients(intel.location);
             }
         } else {
             snprintf(log_msg, sizeof(log_msg), "Invalid message: %.1000s", plaintext);
-            log_event("ERROR", "Invalid message format");
+            log_event("ERROR", log_msg);
         }
     }
 
@@ -210,16 +209,16 @@ void simulate_war_test(Client *clients, size_t client_count) {
     int idx = rand() % 4;
     snprintf(intel.type, sizeof(intel.type), "%s", threat_types[idx % 2]);
     snprintf(intel.data, sizeof(intel.data), "%s", threat_data[idx]);
-    intel.threat_level = 0.1 + (rand() % 90) / 100.0;
+    intel.threat_level = 10 + (rand() % 91); // Whole number 10-100
     snprintf(intel.location, sizeof(intel.location), "%s", locations[rand() % 4]);
 
     char log_msg[1024];
     snprintf(log_msg, sizeof(log_msg), 
-             "Source: %s, Type: %s, Details: %s, Threat Level: %.2f, Location: %s",
+             "Source: %s, Type: %s, Details: %s, Threat Level: %d, Location: %s",
              intel.source, intel.type, intel.data, intel.threat_level, intel.location);
     log_event("WAR_TEST", log_msg);
 
-    if (intel.threat_level > 0.7) {
+    if (intel.threat_level > 70) {
         send_command_to_clients(intel.location);
     }
 }
