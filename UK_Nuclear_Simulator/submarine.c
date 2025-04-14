@@ -15,33 +15,37 @@
 #define CAESAR_SHIFT 3
 #define SIMULATION_DURATION 60
 #define BUFFER_SIZE 1024
+#define SUMMARY_FILE "submarine_summary.txt"
+
+static FILE *log_fp = NULL;
+static int torpedoes_launched = 0;
 
 void init_log_file(void) {
-    FILE *fp = fopen(LOG_FILE, "w");
-    if (!fp) {
+    log_fp = fopen(LOG_FILE, "w");
+    if (!log_fp) {
         fprintf(stderr, "Failed to create log file: %s\n", strerror(errno));
-        return;
+        exit(1);
     }
     time_t now = time(NULL);
     char *time_str = ctime(&now);
-    time_str[strlen(time_str) - 1] = '\0';
-    fprintf(fp, "===== Submarine Log =====\n");
-    fprintf(fp, "Simulation Start: %s\n", time_str);
-    fprintf(fp, "=======================\n\n");
-    fclose(fp);
+    if (time_str) {
+        time_str[strlen(time_str) - 1] = '\0';
+        fprintf(log_fp, "===== Submarine Log =====\n");
+        fprintf(log_fp, "Simulation Start: %s\n", time_str);
+        fprintf(log_fp, "=======================\n\n");
+        fflush(log_fp);
+    }
 }
 
 void log_event(const char *event_type, const char *details) {
-    FILE *fp = fopen(LOG_FILE, "a");
-    if (!fp) {
-        fprintf(stderr, "Failed to open log file: %s\n", strerror(errno));
-        return;
-    }
+    if (!log_fp) return;
     time_t now = time(NULL);
     char *time_str = ctime(&now);
-    time_str[strlen(time_str) - 1] = '\0';
-    fprintf(fp, "[%s] %-10s %s\n", time_str, event_type, details);
-    fclose(fp);
+    if (time_str) {
+        time_str[strlen(time_str) - 1] = '\0';
+        fprintf(log_fp, "[%s] %-10s %s\n", time_str, event_type, details);
+        fflush(log_fp);
+    }
 }
 
 void caesar_decrypt(const char *ciphertext, char *plaintext, size_t len) {
@@ -90,6 +94,29 @@ int parse_command(const char *message, char *command, char *target) {
     return (command[0] != '\0' && target[0] != '\0');
 }
 
+void generate_summary(void) {
+    FILE *summary_fp = fopen(SUMMARY_FILE, "w");
+    if (!summary_fp) {
+        log_event("ERROR", "Failed to create summary file");
+        return;
+    }
+
+    fprintf(summary_fp, "===== Submarine Simulation Summary =====\n");
+    time_t now = time(NULL);
+    char *time_str = ctime(&now);
+    if (time_str) {
+        time_str[strlen(time_str) - 1] = '\0';
+        fprintf(summary_fp, "Simulation End: %s\n", time_str);
+    }
+    fprintf(summary_fp, "Total Torpedoes Launched: %d\n", torpedoes_launched);
+    fprintf(summary_fp, "=====================================\n");
+    fclose(summary_fp);
+
+    char log_msg[256];
+    snprintf(log_msg, sizeof(log_msg), "Summary generated in %s", SUMMARY_FILE);
+    log_event("SUMMARY", log_msg);
+}
+
 int main(void) {
     init_log_file();
     log_event("STARTUP", "Submarine System initializing");
@@ -99,6 +126,7 @@ int main(void) {
         char log_msg[256];
         snprintf(log_msg, sizeof(log_msg), "Socket creation failed: %s", strerror(errno));
         log_event("ERROR", log_msg);
+        if (log_fp) fclose(log_fp);
         return 1;
     }
 
@@ -110,6 +138,7 @@ int main(void) {
         snprintf(log_msg, sizeof(log_msg), "Invalid server address: %s", SERVER_IP);
         log_event("ERROR", log_msg);
         close(sock);
+        if (log_fp) fclose(log_fp);
         return 1;
     }
 
@@ -118,6 +147,7 @@ int main(void) {
         snprintf(log_msg, sizeof(log_msg), "Connection failed: %s", strerror(errno));
         log_event("ERROR", log_msg);
         close(sock);
+        if (log_fp) fclose(log_fp);
         return 1;
     }
 
@@ -147,8 +177,13 @@ int main(void) {
 
         if (parse_command(plaintext, command, target)) {
             if (strcmp(command, "launch") == 0) {
-                snprintf(log_msg, sizeof(log_msg), "Launching missile at %s", target);
+                snprintf(log_msg, sizeof(log_msg), "Launching torpedo at %s", target);
                 log_event("COMMAND", log_msg);
+                torpedoes_launched++;
+                // Simulate torpedo launch feedback
+                char feedback[256];
+                snprintf(feedback, sizeof(feedback), "Torpedo launched at %s successfully", target);
+                log_event("FEEDBACK", feedback);
             } else {
                 snprintf(log_msg, sizeof(log_msg), "Unknown command: %s", command);
                 log_event("ERROR", log_msg);
@@ -160,8 +195,11 @@ int main(void) {
         usleep(500000);
     }
 
+    shutdown(sock, SHUT_RDWR);
     close(sock);
+    generate_summary();
     log_event("SHUTDOWN", "Submarine System terminated");
+    if (log_fp) fclose(log_fp);
     return 0;
 }
 

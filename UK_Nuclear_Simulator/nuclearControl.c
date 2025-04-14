@@ -10,6 +10,7 @@
 #include <ctype.h>
 #include <stdatomic.h>
 #include <stdbool.h>
+#include <errno.h>
 
 #define PORT_SILO 8081
 #define PORT_SUB 8082
@@ -20,6 +21,7 @@
 #define CAESAR_SHIFT 3
 #define SIMULATION_DURATION 60
 #define BUFFER_SIZE 1024
+#define SUMMARY_FILE "nuclearControl_summary.txt"
 
 typedef struct {
     char source[20];
@@ -34,26 +36,43 @@ typedef struct {
     char ip[INET_ADDRSTRLEN];
     int port;
     bool valid;
+    pthread_t thread;
 } Client;
 
 static Client clients[MAX_CLIENTS];
 static atomic_int client_count = 0;
 static pthread_mutex_t clients_mutex = PTHREAD_MUTEX_INITIALIZER;
 static volatile atomic_bool running = ATOMIC_VAR_INIT(true);
+static FILE *log_fp = NULL;
+static int threats_detected = 0;
+static int commands_issued = 0;
 
-void log_event(const char *event_type, const char *details) {
-    FILE *fp = fopen(LOG_FILE, "a");
-    if (!fp) {
-        perror("Failed to open log file");
-        return;
+void init_log_file(void) {
+    log_fp = fopen(LOG_FILE, "w");
+    if (!log_fp) {
+        perror("Failed to create log file");
+        exit(1);
     }
     time_t now = time(NULL);
     char *time_str = ctime(&now);
     if (time_str) {
         time_str[strlen(time_str) - 1] = '\0';
-        fprintf(fp, "[%s] %-12s %s\n", time_str, event_type, details);
+        fprintf(log_fp, "===== Nuclear Control Log =====\n");
+        fprintf(log_fp, "Simulation Start: %s\n", time_str);
+        fprintf(log_fp, "=============================\n\n");
+        fflush(log_fp);
     }
-    fclose(fp);
+}
+
+void log_event(const char *event_type, const char *details) {
+    if (!log_fp) return;
+    time_t now = time(NULL);
+    char *time_str = ctime(&now);
+    if (time_str) {
+        time_str[strlen(time_str) - 1] = '\0';
+        fprintf(log_fp, "[%s] %-12s %s\n", time_str, event_type, details);
+        fflush(log_fp);
+    }
 }
 
 void caesar_encrypt(const char *plaintext, char *ciphertext, size_t len) {
@@ -150,6 +169,7 @@ void send_command_to_clients(const char *location) {
                 snprintf(log_msg, sizeof(log_msg), "Sent command to %s:%d", 
                          clients[i].ip, clients[i].port);
                 log_event("COMMAND", log_msg);
+                commands_issued++;
             }
         }
     }
@@ -171,8 +191,8 @@ void *handle_client(void *arg) {
     while (atomic_load(&running)) {
         ssize_t bytes = recv(client_sock, buffer, sizeof(buffer) - 1, 0);
         if (bytes <= 0) {
-            snprintf(log_msg, sizeof(log_msg), "Client %s:%d disconnected", 
-                     client->ip, client->port);
+            snprintf(log_msg, sizeof(log_msg), "Client %s:%d disconnected: %s", 
+                     client->ip, client->port, bytes == 0 ? "closed connection" : strerror(errno));
             log_event("CONNECTION", log_msg);
             break;
         }
@@ -190,6 +210,7 @@ void *handle_client(void *arg) {
                      "Source: %s, Type: %s, Details: %s, Threat Level: %d, Location: %s",
                      intel.source, intel.type, intel.data, intel.threat_level, intel.location);
             log_event("THREAT", log_msg);
+            threats_detected++;
 
             if (intel.threat_level > 70 && 
                 (strcmp(intel.source, "Radar") == 0 || strcmp(intel.source, "Satellite") == 0)) {
@@ -204,8 +225,8 @@ void *handle_client(void *arg) {
     close(client_sock);
     pthread_mutex_lock(&clients_mutex);
     client->valid = false;
+    atomic_fetch_sub(&client_count, 1);
     pthread_mutex_unlock(&clients_mutex);
-    free(client);
     return NULL;
 }
 
@@ -214,23 +235,124 @@ void simulate_war_test(void) {
     const char *threat_data[] = {"Enemy Aircraft", "Ballistic Missile", "Enemy Submarine", "Naval Fleet"};
     const char *locations[] = {"North Atlantic", "Norwegian Sea", "English Channel", "Arctic Ocean"};
     Intel intel;
-
-    snprintf(intel.source, sizeof(intel.source), "TEST");
-    int idx = rand() % 4;
-    snprintf(intel.type, sizeof(intel.type), "%s", threat_types[idx % 2]);
-    snprintf(intel.data, sizeof(intel.data), "%s", threat_data[idx]);
-    intel.threat_level = 91;
-    snprintf(intel.location, sizeof(intel.location), "%s", locations[rand() % 4]);
-
     char log_msg[BUFFER_SIZE];
-    snprintf(log_msg, sizeof(log_msg), 
-             "Source: %s, Type: %s, Details: %s, Threat Level: %d, Location: %s",
-             intel.source, intel.type, intel.data, intel.threat_level, intel.location);
-    log_event("WAR_TEST", log_msg);
 
-    if (intel.threat_level > 70) {
-        send_command_to_clients(intel.location);
+    for (int i = 0; i < 3 && atomic_load(&running); i++) {
+        snprintf(intel.source, sizeof(intel.source), "TEST");
+        int idx = rand() % 4;
+        snprintf(intel.type, sizeof(intel.type), "%s", threat_types[idx % 2]);
+        snprintf(intel.data, sizeof(intel.data), "%s", threat_data[idx]);
+        intel.threat_level = (rand() % 100 < 50) ? 71 + (rand() % 30) : 10 + (rand() % 61);
+        snprintf(intel.location, sizeof(intel.location), "%s", locations[rand() % 4]);
+
+        snprintf(log_msg, sizeof(log_msg), 
+                 "Source: %s, Type: %s, Details: %s, Threat Level: %d, Location: %s",
+                 intel.source, intel.type, intel.data, intel.threat_level, intel.location);
+        log_event("WAR_TEST", log_msg);
+        threats_detected++;
+
+        if (intel.threat_level > 70) {
+            send_command_to_clients(intel.location);
+        }
+        sleep(10);
     }
+}
+
+void generate_summary(void) {
+    FILE *summary_fp = fopen(SUMMARY_FILE, "w");
+    if (!summary_fp) {
+        log_event("ERROR", "Failed to create summary file");
+        return;
+    }
+
+    fprintf(summary_fp, "===== Nuclear Control Simulation Summary =====\n");
+    time_t now = time(NULL);
+    char *time_str = ctime(&now);
+    if (time_str) {
+        time_str[strlen(time_str) - 1] = '\0';
+        fprintf(summary_fp, "Simulation End: %s\n", time_str);
+    }
+    fprintf(summary_fp, "Total Threats Detected: %d\n", threats_detected);
+    fprintf(summary_fp, "Total Commands Issued: %d\n", commands_issued);
+    fprintf(summary_fp, "Connected Clients:\n");
+    pthread_mutex_lock(&clients_mutex);
+    for (int i = 0; i < MAX_CLIENTS; i++) {
+        if (clients[i].valid) {
+            fprintf(summary_fp, "  - %s:%d\n", clients[i].ip, clients[i].port);
+        }
+    }
+    pthread_mutex_unlock(&clients_mutex);
+    fprintf(summary_fp, "=====================================\n");
+    fclose(summary_fp);
+
+    char log_msg[256];
+    snprintf(log_msg, sizeof(log_msg), "Summary generated in %s", SUMMARY_FILE);
+    log_event("SUMMARY", log_msg);
+}
+
+void *accept_clients(void *arg) {
+    int server_sock = *(int *)arg;
+    int port = *(int *)((char *)arg + sizeof(int));
+    char log_msg[BUFFER_SIZE];
+
+    while (atomic_load(&running)) {
+        struct sockaddr_in client_addr;
+        socklen_t addr_len = sizeof(client_addr);
+        int client_sock = accept(server_sock, (struct sockaddr *)&client_addr, &addr_len);
+        if (client_sock < 0) {
+            if (errno != EINTR && atomic_load(&running)) {
+                snprintf(log_msg, sizeof(log_msg), "Accept failed on port %d: %s", port, strerror(errno));
+                log_event("ERROR", log_msg);
+            }
+            continue;
+        }
+
+        Client *client = malloc(sizeof(Client));
+        if (!client) {
+            snprintf(log_msg, sizeof(log_msg), "Client allocation failed on port %d", port);
+            log_event("ERROR", log_msg);
+            close(client_sock);
+            continue;
+        }
+        client->sock = client_sock;
+        client->port = port;
+        client->valid = true;
+        inet_ntop(AF_INET, &client_addr.sin_addr, client->ip, sizeof(client->ip));
+
+        pthread_mutex_lock(&clients_mutex);
+        int added = 0;
+        for (int i = 0; i < MAX_CLIENTS; i++) {
+            if (!clients[i].valid) {
+                clients[i] = *client;
+                atomic_fetch_add(&client_count, 1);
+                added = 1;
+                break;
+            }
+        }
+        pthread_mutex_unlock(&clients_mutex);
+
+        if (!added) {
+            snprintf(log_msg, sizeof(log_msg), "Max clients reached, rejecting %s:%d", client->ip, port);
+            log_event("ERROR", log_msg);
+            close(client_sock);
+            free(client);
+            continue;
+        }
+
+        if (pthread_create(&client->thread, NULL, handle_client, client) != 0) {
+            snprintf(log_msg, sizeof(log_msg), "Thread creation failed for %s:%d", client->ip, port);
+            log_event("ERROR", log_msg);
+            pthread_mutex_lock(&clients_mutex);
+            client->valid = false;
+            atomic_fetch_sub(&client_count, 1);
+            pthread_mutex_unlock(&clients_mutex);
+            close(client_sock);
+            free(client);
+            continue;
+        }
+        pthread_detach(client->thread);
+    }
+    return NULL;
 }
 
 int start_server(int port) {
@@ -277,25 +399,11 @@ int main(int argc, char *argv[]) {
         srand((unsigned int)time(NULL));
     }
 
-    FILE *fp = fopen(LOG_FILE, "w");
-    if (!fp) {
-        perror("Failed to create log file");
-        return 1;
-    }
-    time_t now = time(NULL);
-    char *time_str = ctime(&now);
-    if (time_str) {
-        time_str[strlen(time_str) - 1] = '\0';
-        fprintf(fp, "===== Nuclear Control Log =====\n");
-        fprintf(fp, "Simulation Start: %s\n", time_str);
-        fprintf(fp, "=============================\n\n");
-    }
-    fclose(fp);
+    init_log_file();
 
     int ports[] = {PORT_SILO, PORT_SUB, PORT_RADAR, PORT_SAT};
     int server_socks[MAX_CLIENTS] = {-1, -1, -1, -1};
-    pthread_t threads[MAX_CLIENTS] = {0};
-    int clients_added = 0;
+    pthread_t accept_threads[MAX_CLIENTS] = {0};
 
     for (int i = 0; i < MAX_CLIENTS; i++) {
         server_socks[i] = start_server(ports[i]);
@@ -305,52 +413,24 @@ int main(int argc, char *argv[]) {
                     close(server_socks[j]);
                 }
             }
+            if (log_fp) fclose(log_fp);
             return 1;
         }
     }
 
     for (int i = 0; i < MAX_CLIENTS; i++) {
-        struct sockaddr_in client_addr;
-        socklen_t addr_len = sizeof(client_addr);
-        int client_sock = accept(server_socks[i], (struct sockaddr *)&client_addr, &addr_len);
-        if (client_sock < 0) {
-            perror("Accept failed");
+        int *args = malloc(sizeof(int) * 2);
+        if (!args) {
+            log_event("ERROR", "Failed to allocate memory for accept thread args");
             continue;
         }
-
-        Client *client = malloc(sizeof(Client));
-        if (!client) {
-            perror("Client allocation failed");
-            close(client_sock);
-            continue;
-        }
-        client->sock = client_sock;
-        client->port = ports[i];
-        client->valid = true;
-        inet_ntop(AF_INET, &client_addr.sin_addr, client->ip, sizeof(client->ip));
-
-        pthread_mutex_lock(&clients_mutex);
-        if (clients_added < MAX_CLIENTS) {
-            clients[clients_added] = *client;
-            atomic_fetch_add(&client_count, 1);
-            clients_added++;
-        } else {
-            free(client);
-            close(client_sock);
-            pthread_mutex_unlock(&clients_mutex);
-            continue;
-        }
-        pthread_mutex_unlock(&clients_mutex);
-
-        if (pthread_create(&threads[i], NULL, handle_client, client) != 0) {
-            perror("Thread creation failed");
-            pthread_mutex_lock(&clients_mutex);
-            clients[clients_added - 1].valid = false;
-            atomic_fetch_sub(&client_count, 1);
-            clients_added--;
-            pthread_mutex_unlock(&clients_mutex);
-            close(client_sock);
-            free(client);
+        args[0] = server_socks[i];
+        args[1] = ports[i];
+        if (pthread_create(&accept_threads[i], NULL, accept_clients, args) != 0) {
+            char log_msg[256];
+            snprintf(log_msg, sizeof(log_msg), "Failed to create accept thread for port %d", ports[i]);
+            log_event("ERROR", log_msg);
+            free(args);
             continue;
         }
     }
@@ -360,7 +440,7 @@ int main(int argc, char *argv[]) {
     }
 
     time_t start_time = time(NULL);
-    while (time(NULL) - start_time < SIMULATION_DURATION) {
+    while (time(NULL) - start_time < SIMULATION_DURATION && atomic_load(&running)) {
         char log_msg[256];
         snprintf(log_msg, sizeof(log_msg), "Simulation running: %ld seconds remaining",
                  SIMULATION_DURATION - (time(NULL) - start_time));
@@ -373,18 +453,20 @@ int main(int argc, char *argv[]) {
     for (int i = 0; i < MAX_CLIENTS; i++) {
         if (server_socks[i] != -1) {
             shutdown(server_socks[i], SHUT_RDWR);
+            close(server_socks[i]);
         }
     }
 
     for (int i = 0; i < MAX_CLIENTS; i++) {
-        if (threads[i]) {
-            pthread_join(threads[i], NULL);
+        if (accept_threads[i]) {
+            pthread_join(accept_threads[i], NULL);
         }
     }
 
     pthread_mutex_lock(&clients_mutex);
     for (int i = 0; i < MAX_CLIENTS; i++) {
         if (clients[i].valid) {
+            shutdown(clients[i].sock, SHUT_RDWR);
             close(clients[i].sock);
             clients[i].valid = false;
         }
@@ -392,13 +474,10 @@ int main(int argc, char *argv[]) {
     atomic_store(&client_count, 0);
     pthread_mutex_unlock(&clients_mutex);
 
-    for (int i = 0; i < MAX_CLIENTS; i++) {
-        if (server_socks[i] != -1) {
-            close(server_socks[i]);
-        }
-    }
+    generate_summary();
 
-    log_event("SHUTDOWN", "Nuclear Control terminated after 60s simulation");
+    log_event("SHUTDOWN", "Nuclear Control terminated");
+    if (log_fp) fclose(log_fp);
     return 0;
 }
 
