@@ -199,7 +199,9 @@ int main(void) {
 
         if (parse_command(plaintext, command, target, details)) {
             if (strcmp(command, "launch") == 0) {
-                snprintf(log_msg, sizeof(log_msg), "Launching torpedoes at threat detected by satellite: %s at %s", details, target);
+                snprintf(log_msg, sizeof(log_msg),
+                         "Launching attack against sea-based threat detected by satellite intelligence: %s at %s",
+                         details, target);
                 log_event("COMMAND", log_msg);
             } else {
                 snprintf(log_msg, sizeof(log_msg), "Unknown command: %s", command);
