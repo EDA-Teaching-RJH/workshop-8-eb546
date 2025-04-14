@@ -15,15 +15,18 @@
 #define CAESAR_SHIFT 3
 #define SIMULATION_DURATION 60
 #define BUFFER_SIZE 1024
-#define LOG_MSG_SIZE 2048
 
 void init_log_file(void) {
     FILE *fp = fopen(LOG_FILE, "w");
     if (fp) {
         time_t now = time(NULL);
-        fprintf(fp, "===== Missile Silo Log =====\n");
-        fprintf(fp, "Simulation Start: %s", ctime(&now));
-        fprintf(fp, "==========================\n\n");
+        char *time_str = ctime(&now);
+        if (time_str) {
+            time_str[strlen(time_str) - 1] = '\0';
+            fprintf(fp, "===== Missile Silo Log =====\n");
+            fprintf(fp, "Simulation Start: %s\n", time_str);
+            fprintf(fp, "==========================\n\n");
+        }
         fclose(fp);
     } else {
         fprintf(stderr, "Failed to create log file: %s (%s)\n", LOG_FILE, strerror(errno));
@@ -71,8 +74,9 @@ int parse_command(const char *message, char *command, char *target) {
     char *token = strtok(copy, "|");
     while (token) {
         char *key = strtok(token, ":");
-        char *value = strtok(NULL, ":");
-        if (key && value) {
+        char *value = strtok(NULL, "");
+        if (key && value && value[0] != '\0') {
+            value++; // Skip the colon
             if (strcmp(key, "command") == 0) {
                 strncpy(command, value, 19);
                 command[19] = '\0';
@@ -125,7 +129,7 @@ int main(void) {
     char plaintext[BUFFER_SIZE];
     char command[20];
     char target[50];
-    char log_msg[LOG_MSG_SIZE];
+    char log_msg[BUFFER_SIZE];
     time_t start_time = time(NULL);
 
     while (time(NULL) - start_time < SIMULATION_DURATION) {

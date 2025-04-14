@@ -14,15 +14,18 @@
 #define CAESAR_SHIFT 3
 #define SIMULATION_DURATION 60
 #define BUFFER_SIZE 1024
-#define LOG_MSG_SIZE 2048
 
 void init_log_file(void) {
     FILE *fp = fopen(LOG_FILE, "w");
     if (fp) {
         time_t now = time(NULL);
-        fprintf(fp, "===== Satellite Log =====\n");
-        fprintf(fp, "Simulation Start: %s", ctime(&now));
-        fprintf(fp, "=======================\n\n");
+        char *time_str = ctime(&now);
+        if (time_str) {
+            time_str[strlen(time_str) - 1] = '\0';
+            fprintf(fp, "===== Satellite Log =====\n");
+            fprintf(fp, "Simulation Start: %s\n", time_str);
+            fprintf(fp, "=======================\n\n");
+        }
         fclose(fp);
     }
 }
@@ -60,7 +63,7 @@ void send_intel(int sock) {
     const char *const locations[] = {"Arctic Ocean", "Mediterranean", "Barents Sea"};
     char message[512];
     char ciphertext[BUFFER_SIZE];
-    char log_msg[LOG_MSG_SIZE];
+    char log_msg[BUFFER_SIZE];
     int idx = rand() % 3;
     int threat_level = 10 + (rand() % 91);
 

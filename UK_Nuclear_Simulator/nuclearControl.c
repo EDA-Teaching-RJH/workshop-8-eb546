@@ -17,6 +17,7 @@
 #define LOG_FILE "nuclearControl.log"
 #define CAESAR_SHIFT 3
 #define SIMULATION_DURATION 60
+#define BUFFER_SIZE 1024
 
 typedef struct {
     char source[20];
@@ -38,7 +39,7 @@ static pthread_mutex_t clients_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 void log_event(const char *event_type, const char *details) {
     FILE *fp = fopen(LOG_FILE, "a");
-    if (fp == NULL) {
+    if (!fp) {
         perror("Log file open failed");
         return;
     }
@@ -83,24 +84,21 @@ int parse_intel(const char *message, Intel *intel) {
     }
 
     memset(intel, 0, sizeof(Intel));
-    int has_source = 0, has_type = 0, has_data = 0, has_threat = 0, has_location = 0;
     char *token = strtok(copy, "|");
     while (token) {
         char *key = strtok(token, ":");
-        char *value = strtok(NULL, ":");
-        if (!key || !value) {
+        char *value = strtok(NULL, "");
+        if (!key || !value || value[0] == '\0') {
             free(copy);
             return 0;
         }
+        value++; // Skip the colon
         if (strcmp(key, "source") == 0) {
             strncpy(intel->source, value, sizeof(intel->source) - 1);
-            has_source = 1;
         } else if (strcmp(key, "type") == 0) {
             strncpy(intel->type, value, sizeof(intel->type) - 1);
-            has_type = 1;
         } else if (strcmp(key, "data") == 0) {
             strncpy(intel->data, value, sizeof(intel->data) - 1);
-            has_data = 1;
         } else if (strcmp(key, "threat_level") == 0) {
             char *endptr;
             intel->threat_level = (int)strtol(value, &endptr, 10);
@@ -108,21 +106,20 @@ int parse_intel(const char *message, Intel *intel) {
                 free(copy);
                 return 0;
             }
-            has_threat = 1;
         } else if (strcmp(key, "location") == 0) {
             strncpy(intel->location, value, sizeof(intel->location) - 1);
-            has_location = 1;
         }
         token = strtok(NULL, "|");
     }
     free(copy);
-    return (has_source && has_type && has_data && has_threat && has_location);
+    return (intel->source[0] && intel->type[0] && intel->data[0] && 
+            intel->threat_level >= 0 && intel->location[0]);
 }
 
 void send_command_to_clients(const char *location) {
     char command[256];
-    char ciphertext[512];
-    char log_msg[1024];
+    char ciphertext[BUFFER_SIZE];
+    char log_msg[BUFFER_SIZE];
     snprintf(command, sizeof(command), "command:launch|target:%s", location);
     caesar_encrypt(command, ciphertext, sizeof(ciphertext));
 
@@ -151,10 +148,10 @@ void send_command_to_clients(const char *location) {
 void *handle_client(void *arg) {
     Client *client = (Client *)arg;
     int client_sock = client->sock;
-    char buffer[1024];
-    char plaintext[1024];
+    char buffer[BUFFER_SIZE];
+    char plaintext[BUFFER_SIZE];
     Intel intel;
-    char log_msg[2048];
+    char log_msg[BUFFER_SIZE];
 
     snprintf(log_msg, sizeof(log_msg), "Client connected from %s:%d", 
              client->ip, client->port);
@@ -215,7 +212,7 @@ void simulate_war_test(Client *clients, size_t client_count) {
     intel.threat_level = 10 + (rand() % 91);
     snprintf(intel.location, sizeof(intel.location), "%s", locations[rand() % 4]);
 
-    char log_msg[1024];
+    char log_msg[BUFFER_SIZE];
     snprintf(log_msg, sizeof(log_msg), 
              "Source: %s, Type: %s, Details: %s, Threat Level: %d, Location: %s",
              intel.source, intel.type, intel.data, intel.threat_level, intel.location);
@@ -270,19 +267,23 @@ int main(int argc, char *argv[]) {
         srand((unsigned int)time(NULL));
     }
 
+    FILE *fp = fopen(LOG_FILE, "w");
+    if (fp) {
+        time_t now = time(NULL);
+        char *time_str = ctime(&now);
+        if (time_str) {
+            time_str[strlen(time_str) - 1] = '\0';
+            fprintf(fp, "===== Nuclear Control Log =====\n");
+            fprintf(fp, "Simulation Start: %s\n", time_str);
+            fprintf(fp, "=============================\n\n");
+        }
+        fclose(fp);
+    }
+
     int ports[] = {PORT_SILO, PORT_SUB, PORT_RADAR, PORT_SAT};
     int server_socks[MAX_CLIENTS];
     pthread_t threads[MAX_CLIENTS];
     time_t start_time = time(NULL);
-
-    FILE *fp = fopen(LOG_FILE, "w");
-    if (fp) {
-        time_t now = time(NULL);
-        fprintf(fp, "===== Nuclear Control Log =====\n");
-        fprintf(fp, "Simulation Start: %s", ctime(&now));
-        fprintf(fp, "=============================\n\n");
-        fclose(fp);
-    }
 
     for (int i = 0; i < MAX_CLIENTS; i++) {
         server_socks[i] = start_server(ports[i]);
@@ -339,6 +340,7 @@ int main(int argc, char *argv[]) {
     }
 
     for (size_t i = 0; i < client_count; i++) {
+        shutdown(clients[i].sock, SHUT_RDWR);
         pthread_cancel(threads[i]);
     }
     for (size_t i = 0; i < client_count; i++) {
