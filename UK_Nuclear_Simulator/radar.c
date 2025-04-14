@@ -103,4 +103,3 @@ int main(void) {
     log_event("SHUTDOWN", "Radar terminated after 2 minutes simulation");
     return 0;
 }
-

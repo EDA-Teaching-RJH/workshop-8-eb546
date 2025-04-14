@@ -53,7 +53,7 @@ void caesar_decrypt(const char *ciphertext, char *plaintext, size_t len) {
     }
 }
 
-int parse_command(const char *message, char *command, char *target) {
+int parse_command(const char *message, char *command, char *target, char *details) {
     char *copy = strdup(message);
     if (!copy) {
         log_event("ERROR", "Memory allocation failed for parsing");
@@ -62,6 +62,7 @@ int parse_command(const char *message, char *command, char *target) {
 
     command[0] = '\0';
     target[0] = '\0';
+    details[0] = '\0';
     int valid = 1;
     char *token = strtok(copy, "|");
     while (token && valid) {
@@ -78,6 +79,9 @@ int parse_command(const char *message, char *command, char *target) {
         } else if (strcmp(key, "target") == 0) {
             strncpy(target, value, 49);
             target[49] = '\0';
+        } else if (strcmp(key, "details") == 0) {
+            strncpy(details, value, 255);
+            details[255] = '\0';
         }
         token = strtok(NULL, "|");
     }
@@ -145,6 +149,7 @@ int main(void) {
     char plaintext[1024];
     char command[20];
     char target[50];
+    char details[256];
     char log_msg[2048];
     time_t start_time = time(NULL);
 
@@ -165,12 +170,13 @@ int main(void) {
         snprintf(log_msg, sizeof(log_msg), "Decrypted Message:  %.1000s", plaintext);
         log_event("MESSAGE", log_msg);
 
-        if (parse_command(plaintext, command, target)) {
+        if (parse_command(plaintext, command, target, details)) {
             if (strcmp(command, "launch") == 0) {
-                snprintf(log_msg, sizeof(log_msg), "Launch Command:  Target = %s", target);
+                snprintf(log_msg, sizeof(log_msg), "Attacking Satellite threat: %s at %s", 
+                         details[0] ? details : "Unknown", target);
                 log_event("COMMAND", log_msg);
             } else {
-                snprintf(log_msg, sizeof(log_msg), "Unknown Command:  %s", command);
+                snprintf(log_msg, sizeof(log_msg), "Unknown Command: %s", command);
                 log_event("ERROR", log_msg);
             }
         }
