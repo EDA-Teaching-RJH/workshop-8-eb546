@@ -14,7 +14,7 @@
 #define PORT_RADAR 8083
 #define PORT_SAT 8084
 #define MAX_CLIENTS 4
-#define LOG_FILE "control.log"
+#define LOG_FILE "nuclearControl.log"
 #define CAESAR_SHIFT 3
 #define SIMULATION_DURATION 120
 

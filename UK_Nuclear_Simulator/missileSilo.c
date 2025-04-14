@@ -10,7 +10,7 @@
 
 #define SERVER_IP "127.0.0.1"
 #define SERVER_PORT 8081
-#define LOG_FILE "silo.log"
+#define LOG_FILE "missileSilo.log"
 #define CAESAR_SHIFT 3
 #define SIMULATION_DURATION 120
 
