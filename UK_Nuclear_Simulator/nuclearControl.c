@@ -16,7 +16,7 @@
 #define MAX_CLIENTS 4
 #define LOG_FILE "nuclearControl.log"
 #define CAESAR_SHIFT 3
-#define SIMULATION_DURATION 30
+#define SIMULATION_DURATION 60
 
 typedef struct {
     char source[20];
@@ -112,8 +112,7 @@ int parse_intel(const char *message, Intel *intel) {
     }
     free(copy);
     if (!has_source || !has_type) {
-        log_event("ERROR", "Missing source or type in intelligence");
-        return 0;
+        return 0; // Silently fail without logging
     }
     return 1;
 }
@@ -148,15 +147,33 @@ void *handle_client(void *arg) {
         snprintf(log_msg, sizeof(log_msg), "Decrypted message: %.1000s", plaintext);
         log_event("MESSAGE", log_msg);
 
-        if (parse_intel(plaintext, &intel)) {
-            snprintf(log_msg, sizeof(log_msg), 
-                     "Source: %s, Type: %s, Details: %s, Threat Level: %.2f, Location: %s",
-                     intel.source, intel.type, intel.data, intel.threat_level, intel.location);
-            log_event("THREAT", log_msg);
+        // Split concatenated messages on "source:"
+        char *msg = plaintext;
+        char *next_msg;
+        while (msg && *msg) {
+            next_msg = strstr(msg, "source:");
+            if (next_msg && next_msg != msg) {
+                *next_msg = '\0'; // Temporarily terminate current message
+                next_msg += strlen("source:"); // Move to start of next message
+            } else {
+                next_msg = NULL; // No more messages
+            }
+
+            if (parse_intel(msg, &intel)) {
+                snprintf(log_msg, sizeof(log_msg), 
+                         "Source: %s, Type: %s, Details: %s, Threat Level: %.2f, Location: %s",
+                         intel.source, intel.type, intel.data, intel.threat_level, intel.location);
+                log_event("THREAT", log_msg);
+            } else {
+                snprintf(log_msg, sizeof(log_msg), "Invalid message: %.1000s", msg);
+                log_event("ERROR", "Invalid message format");
+            }
+
+            msg = next_msg; // Process next message
         }
     }
 
-    snprintf(log_msg, sizeof(log_msg), "Client %s:%d terminated after 30s simulation", 
+    snprintf(log_msg, sizeof(log_msg), "Client %s:%d terminated after 60s simulation", 
              client->ip, client->port);
     log_event("SHUTDOWN", log_msg);
     close(client_sock);
@@ -324,7 +341,7 @@ int main(int argc, char *argv[]) {
         close(server_socks[i]);
     }
 
-    log_event("SHUTDOWN", "Nuclear Control terminated after 30s simulation");
+    log_event("SHUTDOWN", "Nuclear Control terminated after 60s simulation");
     return 0;
 }
 

@@ -12,7 +12,7 @@
 #define SERVER_PORT 8084
 #define LOG_FILE "satellite.log"
 #define CAESAR_SHIFT 3
-#define SIMULATION_DURATION 120
+#define SIMULATION_DURATION 60
 #define BUFFER_SIZE 1024
 #define LOG_MSG_SIZE 2048
 
