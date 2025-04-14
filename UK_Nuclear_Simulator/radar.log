@@ -1,0 +1,10 @@
+===== Radar Log =====
+Simulation Start: Mon Apr 14 19:47:18 2025
+====================
+
+[Mon Apr 14 19:47:18 2025] STARTUP    Radar System initializing
+[Mon Apr 14 19:47:18 2025] CONNECTION Connected to Nuclear Control
+[Mon Apr 14 19:47:18 2025] INTEL      Sending Intelligence: Type=Air, Details=Drone Swarm, ThreatLevel=16, Location=Baltic Sea, [Encrypted] vrxufh:Udgdu|wbsh:Dlu|gdwd:Gurqh Vzdup|wkuhdw_ohyho:16|orfdwlrq:Edowlf Vhd
+[Mon Apr 14 19:47:28 2025] INTEL      Sending Intelligence: Type=Air, Details=Enemy Aircraft, ThreatLevel=95, Location=North Atlantic, [Encrypted] vrxufh:Udgdu|wbsh:Dlu|gdwd:Hqhpb Dlufudiw|wkuhdw_ohyho:95|orfdwlrq:Qruwk Dwodqwlf
+[Mon Apr 14 19:47:38 2025] INTEL      Sending Intelligence: Type=Air, Details=Drone Swarm, ThreatLevel=65, Location=Baltic Sea, [Encrypted] vrxufh:Udgdu|wbsh:Dlu|gdwd:Gurqh Vzdup|wkuhdw_ohyho:65|orfdwlrq:Edowlf Vhd
+[Mon Apr 14 19:47:48 2025] INTEL      Sending Intelligence: Type=Air, Details=Missile Strike, ThreatLevel=60, Location=English Channel, [Encrypted] vrxufh:Udgdu|wbsh:Dlu|gdwd:Plvvloh Vwulnh|wkuhdw_ohyho:60|orfdwlrq:Hqjolvk Fkdqqho

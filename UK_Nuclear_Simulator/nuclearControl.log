@@ -1,0 +1,22 @@
+===== Nuclear Control Log =====
+Simulation Start: Mon Apr 14 19:47:09 2025
+=============================
+
+[Mon Apr 14 19:47:09 2025] STARTUP      Server started on port 8081
+[Mon Apr 14 19:47:09 2025] STARTUP      Server started on port 8082
+[Mon Apr 14 19:47:09 2025] STARTUP      Server started on port 8083
+[Mon Apr 14 19:47:09 2025] STARTUP      Server started on port 8084
+[Mon Apr 14 19:47:24 2025] CONNECTION   Client connected from 127.0.0.1:8081
+[Mon Apr 14 19:47:31 2025] WAR_TEST     Source: TEST, Type: Air, Details: Enemy Aircraft, Threat Level: 91, Location: English Channel
+[Mon Apr 14 19:47:31 2025] COMMAND      Encrypted command: frppdqg:odxqfk|wdujhw:Hqjolvk Fkdqqho
+[Mon Apr 14 19:47:31 2025] COMMAND      Decrypted command: command:launch|target:English Channel
+[Mon Apr 14 19:47:31 2025] COMMAND      Sent command to 127.0.0.1:8081
+[Mon Apr 14 19:47:31 2025] COMMAND      Sent command to 127.0.0.1:8082
+[Mon Apr 14 19:47:31 2025] SIMULATION   Simulation running: 38 seconds remaining
+[Mon Apr 14 19:47:31 2025] CONNECTION   Client connected from 127.0.0.1:8082
+[Mon Apr 14 19:47:31 2025] CONNECTION   Client connected from 127.0.0.1:8083
+[Mon Apr 14 19:47:31 2025] MESSAGE      Encrypted message: vrxufh:Udgdu|wbsh:Dlu|gdwd:Gurqh Vzdup|wkuhdw_ohyho:16|orfdwlrq:Edowlf Vhdvrxufh:Udgdu|wbsh:Dlu|gdwd:Hqhpb Dlufudiw|wkuhdw_ohyho:95|orfdwlrq:Qruwk Dwodqwlf
+[Mon Apr 14 19:47:31 2025] MESSAGE      Decrypted message: source:Radar|type:Air|data:Drone Swarm|threat_level:16|location:Baltic Seasource:Radar|type:Air|data:Enemy Aircraft|threat_level:95|location:North Atlantic
+[Mon Apr 14 19:47:31 2025] CONNECTION   Client connected from 127.0.0.1:8084
+[Mon Apr 14 19:47:31 2025] MESSAGE      Encrypted message: vrxufh:Vdwhoolwh|wbsh:Dlu|gdwd:Vdwhoolwh Dqrpdob|wkuhdw_ohyho:21|orfdwlrq:Eduhqwv Vhdvrxufh:Vdwhoolwh|wbsh:Vhd|gdwd:Qdydo Iohhw|wkuhdw_ohyho:33|orfdwlrq:Phglwhuudqhdq
+[Mon Apr 14 19:47:31 2025] MESSAGE      Decrypted message: source:Satellite|type:Air|data:Satellite Anomaly|threat_level:21|location:Barents Seasource:Satellite|type:Sea|data:Naval Fleet|threat_level:33|location:Mediterranean
