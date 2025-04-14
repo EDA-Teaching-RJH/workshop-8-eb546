@@ -2,71 +2,105 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
 #include <arpa/inet.h>
 #include <time.h>
+#include <ctype.h>
 
 #define SERVER_IP "127.0.0.1"
-#define PORT 8080
-#define BUFFER_SIZE 1024
+#define SERVER_PORT 8083
 #define LOG_FILE "radar.log"
+#define CAESAR_SHIFT 3
+#define SIMULATION_DURATION 30
 
-// Log message
-void log_message(FILE *fp, const char *msg) {
+void log_event(const char *event_type, const char *details) {
+    FILE *fp = fopen(LOG_FILE, "a");
+    if (fp == NULL) {
+        perror("Log file open failed");
+        return;
+    }
     time_t now = time(NULL);
     char *time_str = ctime(&now);
-    time_str[strlen(time_str) - 1] = '\0';
-    fprintf(fp, "[%s] %s\n", time_str, msg);
-    fflush(fp);
+    if (time_str) {
+        time_str[strlen(time_str) - 1] = '\0';
+        fprintf(fp, "[%s] %-12s %s\n", time_str, event_type, details);
+    }
+    fclose(fp);
 }
 
-int main() {
-    // Initialize logging
-    FILE *log_fp = fopen(LOG_FILE, "a");
-    if (!log_fp) {
-        perror("\nERROR: Failed to open log file\n");
-        exit(1);
+void caesar_encrypt(const char *plaintext, char *ciphertext, size_t len) {
+    memset(ciphertext, 0, len);
+    for (size_t i = 0; i < strlen(plaintext) && i < len - 1; i++) {
+        if (isalpha((unsigned char)plaintext[i])) {
+            char base = isupper((unsigned char)plaintext[i]) ? 'A' : 'a';
+            ciphertext[i] = (char)((plaintext[i] - base + CAESAR_SHIFT) % 26 + base);
+        } else {
+            ciphertext[i] = plaintext[i];
+        }
     }
-    chmod(LOG_FILE, 0600);
+}
 
-    // Setup socket
-    int sockfd = socket(AF_INET, SOCK_STREAM, 0);
-    if (sockfd < 0) {
-        perror("\nERROR: Socket creation failed\n");
-        exit(1);
+void send_intel(int sock) {
+    const char *threat_data[] = {"Enemy Aircraft", "Missile Strike", "Drone Swarm"};
+    const char *locations[] = {"North Atlantic", "English Channel", "Baltic Sea"};
+    char message[512];
+    int idx = rand() % 3;
+    double threat_level = 0.1 + (rand() % 90) / 100.0;
+    snprintf(message, sizeof(message),
+             "source:Radar|type:Air|data:%s|threat_level:%.2f|location:%s",
+             threat_data[idx], threat_level, locations[idx]);
+    char ciphertext[1024];
+    caesar_encrypt(message, ciphertext, sizeof(ciphertext));
+
+    char log_msg[2048];
+    snprintf(log_msg, sizeof(log_msg), "Encrypted message: %.1000s", ciphertext);
+    log_event("MESSAGE", log_msg);
+    snprintf(log_msg, sizeof(log_msg), "Original message: %.1000s", message);
+    log_event("MESSAGE", log_msg);
+
+    if (send(sock, ciphertext, strlen(ciphertext), 0) < 0) {
+        log_event("ERROR", "Failed to send intelligence");
+        return;
+    }
+    snprintf(log_msg, sizeof(log_msg), 
+             "Intelligence sent: Type: Air, Details: %s, Threat Level: %.2f, Location: %s",
+             threat_data[idx], threat_level, locations[idx]);
+    log_event("INTEL", log_msg);
+}
+
+int main(void) {
+    int sock = socket(AF_INET, SOCK_STREAM, 0);
+    if (sock < 0) {
+        perror("Socket creation failed");
+        return 1;
     }
 
     struct sockaddr_in server_addr = {0};
     server_addr.sin_family = AF_INET;
-    server_addr.sin_port = htons(PORT);
-    inet_pton(AF_INET, SERVER_IP, &server_addr.sin_addr);
-
-    if (connect(sockfd, (struct sockaddr *)&server_addr, sizeof(server_addr)) < 0) {
-        perror("\nERROR: Connection failed\n");
-        close(sockfd);
-        exit(1);
+    server_addr.sin_port = htons(SERVER_PORT);
+    if (inet_pton(AF_INET, SERVER_IP, &server_addr.sin_addr) <= 0) {
+        perror("Invalid address");
+        close(sock);
+        return 1;
     }
 
-    // Send client type
-    char *type = "radar";
-    write(sockfd, type, strlen(type));
-    log_message(log_fp, "Connected to nuclearControl");
-    printf("\nINFO: Radar connected to server\n\n");
-
-    // Simulate sending intelligence
-    srand(time(NULL));
-    while (1) {
-        if (rand() % 10 < 3) {
-            char intel[] = "THREAT ---> AIR ---> ENEMY_AIRCRAFT ---> Coordinate: 51.5074,-0.1278";
-            write(sockfd, intel, strlen(intel));
-            log_message(log_fp, "Sent intelligence: THREAT ---> AIR ---> ENEMY_AIRCRAFT");
-            printf("\nINFO: Sent intelligence: %s\n", intel);
-        }
-        sleep(10);
+    if (connect(sock, (struct sockaddr *)&server_addr, sizeof(server_addr)) < 0) {
+        perror("Connection failed");
+        close(sock);
+        return 1;
     }
 
-    // Cleanup
-    fclose(log_fp);
-    close(sockfd);
+    log_event("CONNECTION", "Connected to Nuclear Control");
+
+    time_t start_time = time(NULL);
+    while (time(NULL) - start_time < SIMULATION_DURATION) {
+        send_intel(sock);
+        sleep(5);
+    }
+
+    close(sock);
+    log_event("SHUTDOWN", "Radar terminated after 30s simulation");
     return 0;
 }
 

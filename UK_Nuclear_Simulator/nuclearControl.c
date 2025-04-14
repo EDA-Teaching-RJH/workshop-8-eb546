@@ -2,332 +2,318 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <arpa/inet.h>
 #include <sys/socket.h>
-#include <pthread.h>
-#include <openssl/aes.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
 #include <time.h>
+#include <pthread.h>
+#include <ctype.h>
 
-// Constants
-#define PORT 8080
+#define PORT_SILO 8081
+#define PORT_SUB 8082
+#define PORT_RADAR 8083
+#define PORT_SAT 8084
 #define MAX_CLIENTS 4
-#define BUFFER_SIZE 1024
-#define KEY "0123456789abcdef0123456789abcdef" // 32-byte AES-256 key
-#define LOG_FILE "nuclearControl.log"
+#define LOG_FILE "control.log"
+#define CAESAR_SHIFT 3
+#define SIMULATION_DURATION 30
 
-// Structure for client info
 typedef struct {
-    int sockfd;
-    char *type;
+    char source[20];
+    char type[20];
+    char data[256];
+    double threat_level;
+    char location[50];
+} Intel;
+
+typedef struct {
+    int sock;
+    char ip[INET_ADDRSTRLEN];
+    int port;
 } Client;
 
-// Global variables
-Client clients[MAX_CLIENTS] = {0};
-int client_count = 0;
-pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
-FILE *log_fp = NULL;
-char last_threat[BUFFER_SIZE] = {0};
-
-// Encrypt message using AES-256
-void encrypt_message(const char *input, char *output, int *out_len) {
-    AES_KEY enc_key;
-    AES_set_encrypt_key((unsigned char *)KEY, 256, &enc_key);
-    int len = strlen(input) + 1;
-    int pad_len = (len / 16 + 1) * 16;
-    unsigned char *padded = calloc(pad_len, 1);
-    strcpy((char *)padded, input);
-    for (int i = 0; i < pad_len; i += 16) {
-        AES_encrypt(padded + i, (unsigned char *)output + i, &enc_key);
-    }
-    *out_len = pad_len;
-    free(padded);
-}
-
-// Decrypt message using AES-256
-void decrypt_message(const char *input, int in_len, char *output) {
-    AES_KEY dec_key;
-    AES_set_decrypt_key((unsigned char *)KEY, 256, &dec_key);
-    for (int i = 0; i < in_len; i += 16) {
-        AES_decrypt((unsigned char *)input + i, (unsigned char *)output + i, &dec_key);
-    }
-}
-
-// Log message to file
-void log_message(const char *msg) {
-    time_t now = time(NULL);
-    char *time_str = ctime(&now);
-    time_str[strlen(time_str) - 1] = '\0';
-    fprintf(log_fp, "[%s] %s\n", time_str, msg);
-    fflush(log_fp);
-}
-
-// Clear log file
-void clear_logs() {
-    fclose(log_fp);
-    log_fp = fopen(LOG_FILE, "w");
-    if (!log_fp) {
-        printf("\nERROR: Failed to clear log file\n\n");
-        log_fp = fopen(LOG_FILE, "a"); // Reopen in append mode to continue logging
+void log_event(const char *event_type, const char *details) {
+    FILE *fp = fopen(LOG_FILE, "a");
+    if (fp == NULL) {
+        perror("Log file open failed");
         return;
     }
-    printf("\nSUCCESS: Log file cleared\n\n");
-    log_message("Log file cleared");
+    time_t now = time(NULL);
+    char *time_str = ctime(&now);
+    if (time_str) {
+        time_str[strlen(time_str) - 1] = '\0';
+        fprintf(fp, "[%s] %-12s %s\n", time_str, event_type, details);
+    }
+    fclose(fp);
 }
 
-// Handle client communication
+void caesar_encrypt(const char *plaintext, char *ciphertext, size_t len) {
+    memset(ciphertext, 0, len);
+    for (size_t i = 0; i < strlen(plaintext) && i < len - 1; i++) {
+        if (isalpha((unsigned char)plaintext[i])) {
+            char base = isupper((unsigned char)plaintext[i]) ? 'A' : 'a';
+            ciphertext[i] = (char)((plaintext[i] - base + CAESAR_SHIFT) % 26 + base);
+        } else {
+            ciphertext[i] = plaintext[i];
+        }
+    }
+}
+
+void caesar_decrypt(const char *ciphertext, char *plaintext, size_t len) {
+    memset(plaintext, 0, len);
+    for (size_t i = 0; i < strlen(ciphertext) && i < len - 1; i++) {
+        if (isalpha((unsigned char)ciphertext[i])) {
+            char base = isupper((unsigned char)ciphertext[i]) ? 'A' : 'a';
+            plaintext[i] = (char)((ciphertext[i] - base - CAESAR_SHIFT + 26) % 26 + base);
+        } else {
+            plaintext[i] = ciphertext[i];
+        }
+    }
+}
+
+int parse_intel(const char *message, Intel *intel) {
+    char *copy = strdup(message);
+    if (!copy) {
+        log_event("ERROR", "Memory allocation failed for parsing");
+        return 0;
+    }
+
+    memset(intel, 0, sizeof(Intel));
+    char *token = strtok(copy, "|");
+    int valid = 1;
+    while (token && valid) {
+        char *key = strtok(token, ":");
+        char *value = strtok(NULL, ":");
+        if (!key || !value) {
+            log_event("ERROR", "Malformed key-value pair");
+            valid = 0;
+            break;
+        }
+        if (strcmp(key, "source") == 0) {
+            strncpy(intel->source, value, sizeof(intel->source) - 1);
+        } else if (strcmp(key, "type") == 0) {
+            strncpy(intel->type, value, sizeof(intel->type) - 1);
+        } else if (strcmp(key, "data") == 0) {
+            strncpy(intel->data, value, sizeof(intel->data) - 1);
+        } else if (strcmp(key, "threat_level") == 0) {
+            char *endptr;
+            intel->threat_level = strtod(value, &endptr);
+            if (*endptr != '\0') valid = 0;
+        } else if (strcmp(key, "location") == 0) {
+            strncpy(intel->location, value, sizeof(intel->location) - 1);
+        }
+        token = strtok(NULL, "|");
+    }
+    if (!valid || !intel->source[0] || !intel->type[0]) {
+        log_event("ERROR", "Invalid or incomplete intelligence");
+        valid = 0;
+    }
+    free(copy);
+    return valid;
+}
+
 void *handle_client(void *arg) {
-    int sockfd = *(int *)arg;
-    char buffer[BUFFER_SIZE];
-    free(arg);
+    Client *client = (Client *)arg;
+    int client_sock = client->sock;
+    char buffer[1024];
+    char plaintext[1024];
+    Intel intel;
+    char log_msg[2048]; // Increased buffer size
 
-    while (1) {
-        memset(buffer, 0, BUFFER_SIZE);
-        int n = read(sockfd, buffer, BUFFER_SIZE - 1);
-        if (n <= 0) {
-            log_message("Client disconnected");
+    snprintf(log_msg, sizeof(log_msg), "Client connected from %s:%d", 
+             client->ip, client->port);
+    log_event("CONNECTION", log_msg);
+
+    time_t start_time = time(NULL);
+    while (time(NULL) - start_time < SIMULATION_DURATION) {
+        ssize_t bytes = recv(client_sock, buffer, sizeof(buffer) - 1, 0);
+        if (bytes <= 0) {
+            snprintf(log_msg, sizeof(log_msg), "Client %s:%d disconnected", 
+                     client->ip, client->port);
+            log_event("CONNECTION", log_msg);
             break;
         }
+        buffer[bytes] = '\0';
 
-        buffer[n] = '\0';
-        char log_msg[BUFFER_SIZE];
-        snprintf(log_msg, BUFFER_SIZE, "Received: %s", buffer);
-        log_message(log_msg);
+        snprintf(log_msg, sizeof(log_msg), "Encrypted message: %.1000s", buffer);
+        log_event("MESSAGE", log_msg);
 
-        // Store threat for menu
-        if (strstr(buffer, "THREAT")) {
-            strncpy(last_threat, buffer, BUFFER_SIZE - 1);
+        caesar_decrypt(buffer, plaintext, sizeof(plaintext));
+        snprintf(log_msg, sizeof(log_msg), "Decrypted message: %.1000s", plaintext);
+        log_event("MESSAGE", log_msg);
+
+        if (parse_intel(plaintext, &intel)) {
+            snprintf(log_msg, sizeof(log_msg), 
+                     "Source: %s, Type: %s, Details: %s, Threat Level: %.2f, Location: %s",
+                     intel.source, intel.type, intel.data, intel.threat_level, intel.location);
+            log_event("THREAT", log_msg);
+        } else {
+            snprintf(log_msg, sizeof(log_msg), "Failed to parse: %.1000s", plaintext);
+            log_event("ERROR", log_msg);
         }
     }
 
-    // Cleanup
-    pthread_mutex_lock(&mutex);
-    for (int i = 0; i < client_count; i++) {
-        if (clients[i].sockfd == sockfd) {
-            close(clients[i].sockfd);
-            free(clients[i].type);
-            clients[i] = clients[client_count - 1];
-            client_count--;
-            break;
-        }
-    }
-    pthread_mutex_unlock(&mutex);
+    snprintf(log_msg, sizeof(log_msg), "Client %s:%d terminated after 30s simulation", 
+             client->ip, client->port);
+    log_event("SHUTDOWN", log_msg);
+    close(client_sock);
+    free(client);
     return NULL;
 }
 
-// Menu system for user interaction
-void *menu_system(void *arg) {
-    char input[10];
-    while (1) {
-        printf("\n=== Nuclear Control System ===\n");
-        printf("1. View and Decrypt Log Messages\n");
-        printf("2. Decide Launch Based on Last Threat\n");
-        printf("3. Clear Log File\n");
-        printf("4. Exit\n");
-        printf("------------------------------\n");
-        printf("Enter choice: ");
-        if (!fgets(input, sizeof(input), stdin)) continue;
+void simulate_war_test(Client *clients, size_t client_count) {
+    const char *threat_types[] = {"Air", "Sea"};
+    const char *threat_data[] = {"Enemy Aircraft", "Ballistic Missile", "Enemy Submarine", "Naval Fleet"};
+    const char *locations[] = {"North Atlantic", "Norwegian Sea", "English Channel", "Arctic Ocean"};
+    Intel intel;
 
-        int choice = atoi(input);
-        printf("\n");
-        switch (choice) {
-            case 1: {
-                // Read and decrypt log file
-                FILE *temp_fp = fopen(LOG_FILE, "r");
-                if (!temp_fp) {
-                    printf("ERROR: Failed to open log file\n\n");
-                    break;
-                }
-                printf("=== Log Messages ===\n");
-                char line[BUFFER_SIZE];
-                while (fgets(line, BUFFER_SIZE, temp_fp)) {
-                    if (strstr(line, "Sent encrypted launch command")) {
-                        printf("Decrypted: %s", line);
-                    } else {
-                        printf("%s", line);
-                    }
-                }
-                printf("===================\n\n");
-                fclose(temp_fp);
-                break;
-            }
-            case 2: {
-                if (strlen(last_threat) == 0) {
-                    printf("INFO: No threat detected yet\n\n");
-                    break;
-                }
-                printf("Last Threat Detected: %s\n", last_threat);
-                printf("\nSelect Launch Asset:\n");
-                printf("1. Missile Silo\n");
-                printf("2. Submarine\n");
-                printf("3. Cancel\n");
-                printf("-------------------\n");
-                printf("Enter choice: ");
-                if (!fgets(input, sizeof(input), stdin)) continue;
+    snprintf(intel.source, sizeof(intel.source), "TEST");
+    int idx = rand() % 4;
+    snprintf(intel.type, sizeof(intel.type), "%s", threat_types[idx % 2]);
+    snprintf(intel.data, sizeof(intel.data), "%s", threat_data[idx]);
+    intel.threat_level = 0.1 + (rand() % 90) / 100.0;
+    snprintf(intel.location, sizeof(intel.location), "%s", locations[rand() % 4]);
 
-                int asset = atoi(input);
-                if (asset == 3) {
-                    printf("INFO: Launch cancelled\n\n");
-                    break;
-                }
+    char log_msg[1024];
+    snprintf(log_msg, sizeof(log_msg), 
+             "Source: %s, Type: %s, Details: %s, Threat Level: %.2f, Location: %s",
+             intel.source, intel.type, intel.data, intel.threat_level, intel.location);
+    log_event("WAR_TEST", log_msg);
 
-                char launch_cmd[BUFFER_SIZE];
-                if (asset == 1 && strstr(last_threat, "AIR")) {
-                    snprintf(launch_cmd, BUFFER_SIZE, "LAUNCH:TARGET_AIR");
-                } else if (asset == 2 && (strstr(last_threat, "SEA") || strstr(last_threat, "SPACE"))) {
-                    snprintf(launch_cmd, BUFFER_SIZE, "LAUNCH ---> TARGET_SEA_SPACE");
+    if (intel.threat_level > 0.7) {
+        char command[256];
+        snprintf(command, sizeof(command), "command:launch|target:%s", intel.location);
+        char ciphertext[512];
+        caesar_encrypt(command, ciphertext, sizeof(ciphertext));
+        snprintf(log_msg, sizeof(log_msg), "Encrypted command: %.500s", ciphertext);
+        log_event("COMMAND", log_msg);
+        snprintf(log_msg, sizeof(log_msg), "Decrypted command: %s", command);
+        log_event("COMMAND", log_msg);
+
+        for (size_t i = 0; i < client_count; i++) {
+            if (clients[i].port == PORT_SILO || clients[i].port == PORT_SUB) {
+                if (send(clients[i].sock, ciphertext, strlen(ciphertext), 0) < 0) {
+                    snprintf(log_msg, sizeof(log_msg), 
+                             "Failed to send command to %s:%d", 
+                             clients[i].ip, clients[i].port);
+                    log_event("ERROR", log_msg);
                 } else {
-                    printf("ERROR: Invalid asset for this threat\n\n");
-                    break;
+                    snprintf(log_msg, sizeof(log_msg), 
+                             "Sent command to %s:%d", 
+                             clients[i].ip, clients[i].port);
+                    log_event("COMMAND", log_msg);
                 }
-
-                char encrypted[BUFFER_SIZE];
-                int enc_len;
-                encrypt_message(launch_cmd, encrypted, &enc_len);
-
-                pthread_mutex_lock(&mutex);
-                for (int i = 0; i < client_count; i++) {
-                    if ((asset == 1 && strstr(clients[i].type, "silo")) ||
-                        (asset == 2 && strstr(clients[i].type, "submarine"))) {
-                        write(clients[i].sockfd, encrypted, enc_len);
-                        char log_msg[BUFFER_SIZE];
-                        snprintf(log_msg, BUFFER_SIZE, "Sent encrypted launch command to %s", clients[i].type);
-                        log_message(log_msg);
-                        printf("SUCCESS: Launch command sent to %s\n\n", clients[i].type);
-                    }
-                }
-                pthread_mutex_unlock(&mutex);
-                break;
             }
-            case 3:
-                clear_logs();
-                break;
-            case 4:
-                printf("INFO: Exiting menu system\n\n");
-                return NULL;
-            default:
-                printf("ERROR: Invalid choice\n\n");
         }
     }
-    return NULL;
+}
+
+int start_server(int port) {
+    int server_sock = socket(AF_INET, SOCK_STREAM, 0);
+    if (server_sock < 0) {
+        perror("Socket creation failed");
+        return -1;
+    }
+
+    struct sockaddr_in server_addr = {0};
+    server_addr.sin_family = AF_INET;
+    server_addr.sin_addr.s_addr = INADDR_ANY;
+    server_addr.sin_port = htons(port);
+
+    int opt = 1;
+    if (setsockopt(server_sock, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) < 0) {
+        perror("Setsockopt failed");
+        close(server_sock);
+        return -1;
+    }
+
+    if (bind(server_sock, (struct sockaddr *)&server_addr, sizeof(server_addr)) < 0) {
+        perror("Bind failed");
+        close(server_sock);
+        return -1;
+    }
+
+    if (listen(server_sock, 5) < 0) {
+        perror("Listen failed");
+        close(server_sock);
+        return -1;
+    }
+
+    char log_msg[256];
+    snprintf(log_msg, sizeof(log_msg), "Server started on port %d", port);
+    log_event("STARTUP", log_msg);
+    return server_sock;
 }
 
 int main(int argc, char *argv[]) {
     int test_mode = 0;
     if (argc > 1 && strcmp(argv[1], "--test") == 0) {
         test_mode = 1;
-        printf("\nINFO: Running in test mode\n\n");
+        srand((unsigned int)time(NULL));
     }
 
-    // Initialize logging
-    log_fp = fopen(LOG_FILE, "a");
-    if (!log_fp) {
-        perror("\nERROR: Failed to open log file\n");
-        exit(1);
-    }
-    chmod(LOG_FILE, 0600);
+    int ports[] = {PORT_SILO, PORT_SUB, PORT_RADAR, PORT_SAT};
+    int server_socks[MAX_CLIENTS];
+    pthread_t threads[MAX_CLIENTS];
+    Client clients[MAX_CLIENTS];
+    size_t client_count = 0;
+    time_t start_time = time(NULL);
 
-    // Initialize random seed
-    srand(time(NULL));
-
-    // Setup server socket
-    int server_fd = socket(AF_INET, SOCK_STREAM, 0);
-    if (server_fd < 0) {
-        perror("\nERROR: Socket creation failed\n");
-        exit(1);
-    }
-
-    struct sockaddr_in server_addr = {0};
-    server_addr.sin_family = AF_INET;
-    server_addr.sin_addr.s_addr = INADDR_ANY;
-    server_addr.sin_port = htons(PORT);
-
-    if (bind(server_fd, (struct sockaddr *)&server_addr, sizeof(server_addr)) < 0) {
-        perror("\nERROR: Bind failed\n");
-        close(server_fd);
-        exit(1);
-    }
-
-    if (listen(server_fd, 10) < 0) {
-        perror("\nERROR: Listen failed\n");
-        close(server_fd);
-        exit(1);
-    }
-
-    log_message("Server started");
-    printf("\nINFO: Server started on port %d\n\n", PORT);
-
-    // Start menu system
-    pthread_t menu_thread;
-    if (pthread_create(&menu_thread, NULL, menu_system, NULL) != 0) {
-        perror("\nERROR: Menu thread creation failed\n");
-        close(server_fd);
-        exit(1);
-    }
-    pthread_detach(menu_thread);
-
-    // Test mode: Simulate threat
-    if (test_mode) {
-        sleep(3);
-        char threat[BUFFER_SIZE];
-        int type = rand() % 2;
-        if (type == 0) {
-            snprintf(threat, BUFFER_SIZE, "THREAT ---> AIR ---> ENEMY_AIRCRAFT: Coordinate: 51.5074,-0.1278");
-        } else {
-            snprintf(threat, BUFFER_SIZE, "THREAT ---> SEA ---> ENEMY_SUB: Coordinate: 48.8566,2.3522");
+    for (int i = 0; i < MAX_CLIENTS; i++) {
+        server_socks[i] = start_server(ports[i]);
+        if (server_socks[i] < 0) {
+            for (int j = 0; j < i; j++) {
+                close(server_socks[j]);
+            }
+            return 1;
         }
-        char log_msg[BUFFER_SIZE];
-        snprintf(log_msg, BUFFER_SIZE, "Test mode: Simulating %s", threat);
-        log_message(log_msg);
-        printf("\nINFO: Test mode - Simulated threat: %s\n\n", threat);
-
-        strncpy(last_threat, threat, BUFFER_SIZE - 1);
     }
 
-    // Accept clients
-    while (1) {
+    for (int i = 0; i < MAX_CLIENTS; i++) {
         struct sockaddr_in client_addr;
         socklen_t addr_len = sizeof(client_addr);
-        int *client_fd = malloc(sizeof(int));
-        *client_fd = accept(server_fd, (struct sockaddr *)&client_addr, &addr_len);
-        if (*client_fd < 0) {
-            perror("\nERROR: Accept failed\n");
-            free(client_fd);
+        int client_sock = accept(server_socks[i], (struct sockaddr *)&client_addr, &addr_len);
+        if (client_sock < 0) {
+            perror("Accept failed");
             continue;
         }
 
-        // Receive client type
-        char buffer[BUFFER_SIZE] = {0};
-        read(*client_fd, buffer, BUFFER_SIZE - 1);
-        log_message(buffer);
-        printf("\nINFO: New client connected - Type: %s\n\n", buffer);
+        clients[client_count].sock = client_sock;
+        clients[client_count].port = ports[i];
+        inet_ntop(AF_INET, &client_addr.sin_addr, clients[client_count].ip, sizeof(clients[client_count].ip));
 
-        pthread_mutex_lock(&mutex);
-        if (client_count < MAX_CLIENTS) {
-            clients[client_count].sockfd = *client_fd;
-            clients[client_count].type = strdup(buffer);
-            client_count++;
-        } else {
-            log_message("Max clients reached");
-            printf("\nWARNING: Max clients reached, rejecting connection\n\n");
-            close(*client_fd);
-            free(client_fd);
-            pthread_mutex_unlock(&mutex);
+        if (pthread_create(&threads[client_count], NULL, handle_client, &clients[client_count]) != 0) {
+            perror("Thread creation failed");
+            close(client_sock);
             continue;
         }
-        pthread_mutex_unlock(&mutex);
-
-        // Start client thread
-        pthread_t thread;
-        if (pthread_create(&thread, NULL, handle_client, client_fd) != 0) {
-            perror("\nERROR: Thread creation failed\n");
-            close(*client_fd);
-            free(client_fd);
-        }
-        pthread_detach(thread);
+        client_count++;
     }
 
-    // Cleanup
-    fclose(log_fp);
-    close(server_fd);
+    if (test_mode) {
+        simulate_war_test(clients, client_count);
+    }
+
+    while (time(NULL) - start_time < SIMULATION_DURATION) {
+        char log_msg[256];
+        snprintf(log_msg, sizeof(log_msg), "Simulation running: %ld seconds remaining",
+                 SIMULATION_DURATION - (time(NULL) - start_time));
+        log_event("SIMULATION", log_msg);
+        sleep(5);
+    }
+
+    for (size_t i = 0; i < client_count; i++) {
+        pthread_cancel(threads[i]);
+    }
+    for (size_t i = 0; i < client_count; i++) {
+        pthread_join(threads[i], NULL);
+        close(clients[i].sock);
+    }
+    for (int i = 0; i < MAX_CLIENTS; i++) {
+        close(server_socks[i]);
+    }
+
+    log_event("SHUTDOWN", "Nuclear Control terminated after 30s simulation");
     return 0;
 }
+

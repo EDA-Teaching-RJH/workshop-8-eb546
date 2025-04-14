@@ -2,105 +2,140 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
 #include <arpa/inet.h>
-#include <openssl/aes.h>
 #include <time.h>
+#include <ctype.h>
 
 #define SERVER_IP "127.0.0.1"
-#define PORT 8080
-#define BUFFER_SIZE 1024
-#define KEY "0123456789abcdef0123456789abcdef"
-#define LOG_FILE "missileSilo.log"
+#define SERVER_PORT 8081
+#define LOG_FILE "silo.log"
+#define CAESAR_SHIFT 3
+#define SIMULATION_DURATION 30
 
-// Decrypt message
-void decrypt_message(const char *input, int in_len, char *output) {
-    AES_KEY dec_key;
-    AES_set_decrypt_key((unsigned char *)KEY, 256, &dec_key);
-    for (int i = 0; i < in_len; i += 16) {
-        AES_decrypt((unsigned char *)input + i, (unsigned char *)output + i, &dec_key);
+void log_event(const char *event_type, const char *details) {
+    FILE *fp = fopen(LOG_FILE, "a");
+    if (fp == NULL) {
+        perror("Log file open failed");
+        return;
     }
-}
-
-// Log message
-void log_message(FILE *fp, const char *msg) {
     time_t now = time(NULL);
     char *time_str = ctime(&now);
-    time_str[strlen(time_str) - 1] = '\0';
-    fprintf(fp, "[%s] %s\n", time_str, msg);
-    fflush(fp);
+    if (time_str) {
+        time_str[strlen(time_str) - 1] = '\0';
+        fprintf(fp, "[%s] %-12s %s\n", time_str, event_type, details);
+    }
+    fclose(fp);
 }
 
-int main() {
-    // Initialize logging
-    FILE *log_fp = fopen(LOG_FILE, "a");
-    if (!log_fp) {
-        perror("\nERROR: Failed to open log file\n");
-        exit(1);
+void caesar_decrypt(const char *ciphertext, char *plaintext, size_t len) {
+    memset(plaintext, 0, len);
+    for (size_t i = 0; i < strlen(ciphertext) && i < len - 1; i++) {
+        if (isalpha((unsigned char)ciphertext[i])) {
+            char base = isupper((unsigned char)ciphertext[i]) ? 'A' : 'a';
+            plaintext[i] = (char)((ciphertext[i] - base - CAESAR_SHIFT + 26) % 26 + base);
+        } else {
+            plaintext[i] = ciphertext[i];
+        }
     }
-    chmod(LOG_FILE, 0600);
+}
 
-    // Setup client socket
-    int sockfd = socket(AF_INET, SOCK_STREAM, 0);
-    if (sockfd < 0) {
-        perror("\nERROR: Socket creation failed\n");
-        exit(1);
+int parse_command(const char *message, char *command, char *target) {
+    char *copy = strdup(message);
+    if (!copy) {
+        log_event("ERROR", "Memory allocation failed for parsing");
+        return 0;
+    }
+
+    command[0] = '\0';
+    target[0] = '\0';
+    int valid = 1;
+    char *token = strtok(copy, "|");
+    while (token && valid) {
+        char *key = strtok(token, ":");
+        char *value = strtok(NULL, ":");
+        if (!key || !value) {
+            log_event("ERROR", "Malformed command key-value pair");
+            valid = 0;
+            break;
+        }
+        if (strcmp(key, "command") == 0) {
+            strncpy(command, value, 19);
+            command[19] = '\0';
+        } else if (strcmp(key, "target") == 0) {
+            strncpy(target, value, 49);
+            target[49] = '\0';
+        }
+        token = strtok(NULL, "|");
+    }
+    free(copy);
+    if (!valid || !command[0]) {
+        log_event("ERROR", "Invalid or incomplete command");
+        return 0;
+    }
+    return 1;
+}
+
+int main(void) {
+    int sock = socket(AF_INET, SOCK_STREAM, 0);
+    if (sock < 0) {
+        perror("Socket creation failed");
+        return 1;
     }
 
     struct sockaddr_in server_addr = {0};
     server_addr.sin_family = AF_INET;
-    server_addr.sin_port = htons(PORT);
-    inet_pton(AF_INET, SERVER_IP, &server_addr.sin_addr);
-
-    if (connect(sockfd, (struct sockaddr *)&server_addr, sizeof(server_addr)) < 0) {
-        perror("\nERROR: Connection failed\n");
-        close(sockfd);
-        exit(1);
+    server_addr.sin_port = htons(SERVER_PORT);
+    if (inet_pton(AF_INET, SERVER_IP, &server_addr.sin_addr) <= 0) {
+        perror("Invalid address");
+        close(sock);
+        return 1;
     }
 
-    // Send client type
-    char *type = "silo";
-    write(sockfd, type, strlen(type));
-    log_message(log_fp, "Connected to nuclearControl");
-    printf("\nINFO: Missile Silo connected to server\n\n");
+    if (connect(sock, (struct sockaddr *)&server_addr, sizeof(server_addr)) < 0) {
+        perror("Connection failed");
+        close(sock);
+        return 1;
+    }
 
-    // Listen for commands
-    char buffer[BUFFER_SIZE];
-    while (1) {
-        memset(buffer, 0, BUFFER_SIZE);
-        int n = read(sockfd, buffer, BUFFER_SIZE);
-        if (n <= 0) {
-            log_message(log_fp, "Disconnected from server");
-            printf("\nINFO: Disconnected from server\n\n");
+    log_event("CONNECTION", "Connected to Nuclear Control");
+
+    char buffer[1024];
+    char plaintext[1024];
+    char command[20];
+    char target[50];
+    char log_msg[2048];
+    time_t start_time = time(NULL);
+
+    while (time(NULL) - start_time < SIMULATION_DURATION) {
+        ssize_t bytes = recv(sock, buffer, sizeof(buffer) - 1, 0);
+        if (bytes <= 0) {
+            log_event("CONNECTION", "Disconnected from Control");
             break;
         }
+        buffer[bytes] = '\0';
 
-        // Decrypt message
-        char decrypted[BUFFER_SIZE] = {0};
-        decrypt_message(buffer, n, decrypted);
-        char log_msg[BUFFER_SIZE];
-        snprintf(log_msg, BUFFER_SIZE, "Received: %s", decrypted);
-        log_message(log_fp, log_msg);
-        printf("\nINFO: Received command: %s\n", decrypted);
+        snprintf(log_msg, sizeof(log_msg), "Encrypted message: %.1000s", buffer);
+        log_event("MESSAGE", log_msg);
 
-        // Process launch command
-        if (strstr(decrypted, "LAUNCH ---> TARGET_AIR")) {
-            log_message(log_fp, "Launch command verified for air target. Initiating countdown...");
-            printf("\n=== Launch Sequence Initiated ===\n");
-            for (int i = 10; i >= 0; i--) {
-                snprintf(log_msg, BUFFER_SIZE, "Launch in %d seconds", i);
-                log_message(log_fp, log_msg);
-                printf("T-%d seconds\n", i);
-                sleep(1);
+        caesar_decrypt(buffer, plaintext, sizeof(plaintext));
+        snprintf(log_msg, sizeof(log_msg), "Decrypted message: %.1000s", plaintext);
+        log_event("MESSAGE", log_msg);
+
+        if (parse_command(plaintext, command, target)) {
+            if (strcmp(command, "launch") == 0) {
+                snprintf(log_msg, sizeof(log_msg), "Launch command received, Target: %s", target);
+                log_event("COMMAND", log_msg);
+            } else {
+                snprintf(log_msg, sizeof(log_msg), "Unknown command: %s", command);
+                log_event("ERROR", log_msg);
             }
-            log_message(log_fp, "Missile launched to air target!");
-            printf("SUCCESS: Missile launched to air target\n");
-            printf("=============================\n\n");
         }
     }
 
-    // Cleanup
-    fclose(log_fp);
-    close(sockfd);
+    close(sock);
+    log_event("SHUTDOWN", "Missile Silo terminated after 30s simulation");
     return 0;
 }
 
