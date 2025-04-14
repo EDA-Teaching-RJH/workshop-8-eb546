@@ -1,0 +1,30 @@
+===== Submarine Log =====
+Simulation Start: Mon Apr 14 20:24:41 2025
+=======================
+
+[Mon Apr 14 20:24:41 2025] STARTUP    Submarine System initializing
+[Mon Apr 14 20:24:41 2025] CONNECTION Connected to Nuclear Control
+[Mon Apr 14 20:24:47 2025] MESSAGE    Received: [Encrypted] frppdqg:odxqfk|wdujhw:Qruwk Dwodqwlf -> [Decrypted] command:launch|target:North Atlantic
+[Mon Apr 14 20:24:47 2025] COMMAND    Launching torpedo at North Atlantic
+[Mon Apr 14 20:24:47 2025] FEEDBACK   Torpedo launched at North Atlantic successfully
+[Mon Apr 14 20:24:49 2025] MESSAGE    Received: [Encrypted] frppdqg:odxqfk|wdujhw:Edowlf Vhd -> [Decrypted] command:launch|target:Baltic Sea
+[Mon Apr 14 20:24:49 2025] COMMAND    Launching torpedo at Baltic Sea
+[Mon Apr 14 20:24:49 2025] FEEDBACK   Torpedo launched at Baltic Sea successfully
+[Mon Apr 14 20:24:55 2025] MESSAGE    Received: [Encrypted] frppdqg:odxqfk|wdujhw:Dufwlf Rfhdq -> [Decrypted] command:launch|target:Arctic Ocean
+[Mon Apr 14 20:24:55 2025] COMMAND    Launching torpedo at Arctic Ocean
+[Mon Apr 14 20:24:55 2025] FEEDBACK   Torpedo launched at Arctic Ocean successfully
+[Mon Apr 14 20:24:57 2025] MESSAGE    Received: [Encrypted] frppdqg:odxqfk|wdujhw:Hqjolvk Fkdqqho -> [Decrypted] command:launch|target:English Channel
+[Mon Apr 14 20:24:57 2025] COMMAND    Launching torpedo at English Channel
+[Mon Apr 14 20:24:57 2025] FEEDBACK   Torpedo launched at English Channel successfully
+[Mon Apr 14 20:25:15 2025] MESSAGE    Received: [Encrypted] frppdqg:odxqfk|wdujhw:Qruwk Dwodqwlf -> [Decrypted] command:launch|target:North Atlantic
+[Mon Apr 14 20:25:15 2025] COMMAND    Launching torpedo at North Atlantic
+[Mon Apr 14 20:25:15 2025] FEEDBACK   Torpedo launched at North Atlantic successfully
+[Mon Apr 14 20:25:26 2025] MESSAGE    Received: [Encrypted] frppdqg:odxqfk|wdujhw:Hqjolvk Fkdqqho -> [Decrypted] command:launch|target:English Channel
+[Mon Apr 14 20:25:26 2025] COMMAND    Launching torpedo at English Channel
+[Mon Apr 14 20:25:26 2025] FEEDBACK   Torpedo launched at English Channel successfully
+[Mon Apr 14 20:25:29 2025] MESSAGE    Received: [Encrypted] frppdqg:odxqfk|wdujhw:Qruwk Vhd -> [Decrypted] command:launch|target:North Sea
+[Mon Apr 14 20:25:29 2025] COMMAND    Launching torpedo at North Sea
+[Mon Apr 14 20:25:29 2025] FEEDBACK   Torpedo launched at North Sea successfully
+[Mon Apr 14 20:26:07 2025] CONNECTION Disconnected: Server closed connection
+[Mon Apr 14 20:26:07 2025] SUMMARY    Summary generated in submarine_summary.txt
+[Mon Apr 14 20:26:07 2025] SHUTDOWN   Submarine System terminated

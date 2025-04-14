@@ -1,0 +1,4 @@
+===== Missile Silo Simulation Summary =====
+Simulation End: Mon Apr 14 20:26:07 2025
+Total Missiles Launched: 7
+=====================================

@@ -1,0 +1,4 @@
+===== Submarine Simulation Summary =====
+Simulation End: Mon Apr 14 20:26:07 2025
+Total Torpedoes Launched: 7
+=====================================

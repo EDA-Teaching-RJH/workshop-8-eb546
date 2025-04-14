@@ -1,0 +1,109 @@
+===== Nuclear Control Log =====
+Simulation Start: Mon Apr 14 20:24:37 2025
+=============================
+
+[Mon Apr 14 20:24:37 2025] STARTUP      Server started on port 8081
+[Mon Apr 14 20:24:37 2025] STARTUP      Server started on port 8082
+[Mon Apr 14 20:24:37 2025] STARTUP      Server started on port 8083
+[Mon Apr 14 20:24:37 2025] STARTUP      Server started on port 8084
+[Mon Apr 14 20:24:37 2025] WAR_TEST     Source: TEST, Type: Sea, Details: Naval Fleet, Threat Level: 75, Location: Arctic Ocean
+[Mon Apr 14 20:24:37 2025] COMMAND      Encrypted command: frppdqg:odxqfk|wdujhw:Dufwlf Rfhdq
+[Mon Apr 14 20:24:37 2025] COMMAND      Decrypted command: command:launch|target:Arctic Ocean
+[Mon Apr 14 20:24:38 2025] CONNECTION   Client connected from 127.0.0.1:8084
+[Mon Apr 14 20:24:38 2025] MESSAGE      Encrypted message: vrxufh:Vdwhoolwh|wbsh:Vsdfh|gdwd:Edoolvwlf Plvvloh|wkuhdw_ohyho:25|orfdwlrq:Dufwlf Rfhdq
+[Mon Apr 14 20:24:38 2025] MESSAGE      Decrypted message: source:Satellite|type:Space|data:Ballistic Missile|threat_level:25|location:Arctic Ocean
+[Mon Apr 14 20:24:38 2025] THREAT       Source: Satellite, Type: Space, Details: Ballistic Missile, Threat Level: 25, Location: Arctic Ocean
+[Mon Apr 14 20:24:39 2025] CONNECTION   Client connected from 127.0.0.1:8083
+[Mon Apr 14 20:24:39 2025] MESSAGE      Encrypted message: vrxufh:Udgdu|wbsh:Dlu|gdwd:Vwhdowk Erpehu|wkuhdw_ohyho:29|orfdwlrq:Lulvk Vhd
+[Mon Apr 14 20:24:39 2025] MESSAGE      Decrypted message: source:Radar|type:Air|data:Stealth Bomber|threat_level:29|location:Irish Sea
+[Mon Apr 14 20:24:39 2025] THREAT       Source: Radar, Type: Air, Details: Stealth Bomber, Threat Level: 29, Location: Irish Sea
+[Mon Apr 14 20:24:41 2025] CONNECTION   Client connected from 127.0.0.1:8081
+[Mon Apr 14 20:24:41 2025] CONNECTION   Client connected from 127.0.0.1:8082
+[Mon Apr 14 20:24:47 2025] WAR_TEST     Source: TEST, Type: Air, Details: Enemy Aircraft, Threat Level: 81, Location: North Atlantic
+[Mon Apr 14 20:24:47 2025] COMMAND      Encrypted command: frppdqg:odxqfk|wdujhw:Qruwk Dwodqwlf
+[Mon Apr 14 20:24:47 2025] COMMAND      Decrypted command: command:launch|target:North Atlantic
+[Mon Apr 14 20:24:47 2025] COMMAND      Sent command to 127.0.0.1:8081
+[Mon Apr 14 20:24:47 2025] COMMAND      Sent command to 127.0.0.1:8082
+[Mon Apr 14 20:24:48 2025] MESSAGE      Encrypted message: vrxufh:Vdwhoolwh|wbsh:Vhd|gdwd:Vdwhoolwh Dqrpdob|wkuhdw_ohyho:26|orfdwlrq:Eduhqwv Vhd
+[Mon Apr 14 20:24:48 2025] MESSAGE      Decrypted message: source:Satellite|type:Sea|data:Satellite Anomaly|threat_level:26|location:Barents Sea
+[Mon Apr 14 20:24:48 2025] THREAT       Source: Satellite, Type: Sea, Details: Satellite Anomaly, Threat Level: 26, Location: Barents Sea
+[Mon Apr 14 20:24:49 2025] MESSAGE      Encrypted message: vrxufh:Udgdu|wbsh:Dlu|gdwd:Gurqh Vzdup|wkuhdw_ohyho:87|orfdwlrq:Edowlf Vhd
+[Mon Apr 14 20:24:49 2025] MESSAGE      Decrypted message: source:Radar|type:Air|data:Drone Swarm|threat_level:87|location:Baltic Sea
+[Mon Apr 14 20:24:49 2025] THREAT       Source: Radar, Type: Air, Details: Drone Swarm, Threat Level: 87, Location: Baltic Sea
+[Mon Apr 14 20:24:49 2025] COMMAND      Encrypted command: frppdqg:odxqfk|wdujhw:Edowlf Vhd
+[Mon Apr 14 20:24:49 2025] COMMAND      Decrypted command: command:launch|target:Baltic Sea
+[Mon Apr 14 20:24:49 2025] COMMAND      Sent command to 127.0.0.1:8081
+[Mon Apr 14 20:24:49 2025] COMMAND      Sent command to 127.0.0.1:8082
+[Mon Apr 14 20:24:55 2025] MESSAGE      Encrypted message: vrxufh:Vdwhoolwh|wbsh:Dlu|gdwd:Edoolvwlf Plvvloh|wkuhdw_ohyho:85|orfdwlrq:Dufwlf Rfhdq
+[Mon Apr 14 20:24:55 2025] MESSAGE      Decrypted message: source:Satellite|type:Air|data:Ballistic Missile|threat_level:85|location:Arctic Ocean
+[Mon Apr 14 20:24:55 2025] THREAT       Source: Satellite, Type: Air, Details: Ballistic Missile, Threat Level: 85, Location: Arctic Ocean
+[Mon Apr 14 20:24:55 2025] COMMAND      Encrypted command: frppdqg:odxqfk|wdujhw:Dufwlf Rfhdq
+[Mon Apr 14 20:24:55 2025] COMMAND      Decrypted command: command:launch|target:Arctic Ocean
+[Mon Apr 14 20:24:55 2025] COMMAND      Sent command to 127.0.0.1:8081
+[Mon Apr 14 20:24:55 2025] COMMAND      Sent command to 127.0.0.1:8082
+[Mon Apr 14 20:24:57 2025] WAR_TEST     Source: TEST, Type: Sea, Details: Ballistic Missile, Threat Level: 83, Location: English Channel
+[Mon Apr 14 20:24:57 2025] COMMAND      Encrypted command: frppdqg:odxqfk|wdujhw:Hqjolvk Fkdqqho
+[Mon Apr 14 20:24:57 2025] COMMAND      Decrypted command: command:launch|target:English Channel
+[Mon Apr 14 20:24:57 2025] COMMAND      Sent command to 127.0.0.1:8081
+[Mon Apr 14 20:24:57 2025] COMMAND      Sent command to 127.0.0.1:8082
+[Mon Apr 14 20:24:59 2025] MESSAGE      Encrypted message: vrxufh:Udgdu|wbsh:Dlu|gdwd:Plvvloh Vwulnh|wkuhdw_ohyho:42|orfdwlrq:Hqjolvk Fkdqqho
+[Mon Apr 14 20:24:59 2025] MESSAGE      Decrypted message: source:Radar|type:Air|data:Missile Strike|threat_level:42|location:English Channel
+[Mon Apr 14 20:24:59 2025] THREAT       Source: Radar, Type: Air, Details: Missile Strike, Threat Level: 42, Location: English Channel
+[Mon Apr 14 20:25:03 2025] MESSAGE      Encrypted message: vrxufh:Vdwhoolwh|wbsh:Vsdfh|gdwd:Qdydo Iohhw|wkuhdw_ohyho:10|orfdwlrq:Phglwhuudqhdq
+[Mon Apr 14 20:25:03 2025] MESSAGE      Decrypted message: source:Satellite|type:Space|data:Naval Fleet|threat_level:10|location:Mediterranean
+[Mon Apr 14 20:25:03 2025] THREAT       Source: Satellite, Type: Space, Details: Naval Fleet, Threat Level: 10, Location: Mediterranean
+[Mon Apr 14 20:25:06 2025] MESSAGE      Encrypted message: vrxufh:Udgdu|wbsh:Dlu|gdwd:Vwhdowk Erpehu|wkuhdw_ohyho:22|orfdwlrq:Lulvk Vhd
+[Mon Apr 14 20:25:06 2025] MESSAGE      Decrypted message: source:Radar|type:Air|data:Stealth Bomber|threat_level:22|location:Irish Sea
+[Mon Apr 14 20:25:06 2025] THREAT       Source: Radar, Type: Air, Details: Stealth Bomber, Threat Level: 22, Location: Irish Sea
+[Mon Apr 14 20:25:07 2025] SIMULATION   Simulation running: 60 seconds remaining
+[Mon Apr 14 20:25:12 2025] SIMULATION   Simulation running: 55 seconds remaining
+[Mon Apr 14 20:25:13 2025] MESSAGE      Encrypted message: vrxufh:Vdwhoolwh|wbsh:Vsdfh|gdwd:Edoolvwlf Plvvloh|wkuhdw_ohyho:68|orfdwlrq:Dufwlf Rfhdq
+[Mon Apr 14 20:25:13 2025] MESSAGE      Decrypted message: source:Satellite|type:Space|data:Ballistic Missile|threat_level:68|location:Arctic Ocean
+[Mon Apr 14 20:25:13 2025] THREAT       Source: Satellite, Type: Space, Details: Ballistic Missile, Threat Level: 68, Location: Arctic Ocean
+[Mon Apr 14 20:25:15 2025] MESSAGE      Encrypted message: vrxufh:Udgdu|wbsh:Dlu|gdwd:Hqhpb Dlufudiw|wkuhdw_ohyho:80|orfdwlrq:Qruwk Dwodqwlf
+[Mon Apr 14 20:25:15 2025] MESSAGE      Decrypted message: source:Radar|type:Air|data:Enemy Aircraft|threat_level:80|location:North Atlantic
+[Mon Apr 14 20:25:15 2025] THREAT       Source: Radar, Type: Air, Details: Enemy Aircraft, Threat Level: 80, Location: North Atlantic
+[Mon Apr 14 20:25:15 2025] COMMAND      Encrypted command: frppdqg:odxqfk|wdujhw:Qruwk Dwodqwlf
+[Mon Apr 14 20:25:15 2025] COMMAND      Decrypted command: command:launch|target:North Atlantic
+[Mon Apr 14 20:25:15 2025] COMMAND      Sent command to 127.0.0.1:8081
+[Mon Apr 14 20:25:15 2025] COMMAND      Sent command to 127.0.0.1:8082
+[Mon Apr 14 20:25:17 2025] SIMULATION   Simulation running: 50 seconds remaining
+[Mon Apr 14 20:25:21 2025] MESSAGE      Encrypted message: vrxufh:Vdwhoolwh|wbsh:Vsdfh|gdwd:Edoolvwlf Plvvloh|wkuhdw_ohyho:32|orfdwlrq:Dufwlf Rfhdq
+[Mon Apr 14 20:25:21 2025] MESSAGE      Decrypted message: source:Satellite|type:Space|data:Ballistic Missile|threat_level:32|location:Arctic Ocean
+[Mon Apr 14 20:25:21 2025] THREAT       Source: Satellite, Type: Space, Details: Ballistic Missile, Threat Level: 32, Location: Arctic Ocean
+[Mon Apr 14 20:25:21 2025] MESSAGE      Encrypted message: vrxufh:Udgdu|wbsh:Dlu|gdwd:Plvvloh Vwulnh|wkuhdw_ohyho:54|orfdwlrq:Hqjolvk Fkdqqho
+[Mon Apr 14 20:25:21 2025] MESSAGE      Decrypted message: source:Radar|type:Air|data:Missile Strike|threat_level:54|location:English Channel
+[Mon Apr 14 20:25:21 2025] THREAT       Source: Radar, Type: Air, Details: Missile Strike, Threat Level: 54, Location: English Channel
+[Mon Apr 14 20:25:22 2025] SIMULATION   Simulation running: 45 seconds remaining
+[Mon Apr 14 20:25:26 2025] MESSAGE      Encrypted message: vrxufh:Udgdu|wbsh:Dlu|gdwd:Plvvloh Vwulnh|wkuhdw_ohyho:89|orfdwlrq:Hqjolvk Fkdqqho
+[Mon Apr 14 20:25:26 2025] MESSAGE      Decrypted message: source:Radar|type:Air|data:Missile Strike|threat_level:89|location:English Channel
+[Mon Apr 14 20:25:26 2025] THREAT       Source: Radar, Type: Air, Details: Missile Strike, Threat Level: 89, Location: English Channel
+[Mon Apr 14 20:25:26 2025] COMMAND      Encrypted command: frppdqg:odxqfk|wdujhw:Hqjolvk Fkdqqho
+[Mon Apr 14 20:25:26 2025] COMMAND      Decrypted command: command:launch|target:English Channel
+[Mon Apr 14 20:25:26 2025] COMMAND      Sent command to 127.0.0.1:8081
+[Mon Apr 14 20:25:26 2025] COMMAND      Sent command to 127.0.0.1:8082
+[Mon Apr 14 20:25:27 2025] SIMULATION   Simulation running: 40 seconds remaining
+[Mon Apr 14 20:25:29 2025] MESSAGE      Encrypted message: vrxufh:Vdwhoolwh|wbsh:Dlu|gdwd:Ruelwdo Gheulv|wkuhdw_ohyho:71|orfdwlrq:Qruwk Vhd
+[Mon Apr 14 20:25:29 2025] MESSAGE      Decrypted message: source:Satellite|type:Air|data:Orbital Debris|threat_level:71|location:North Sea
+[Mon Apr 14 20:25:29 2025] THREAT       Source: Satellite, Type: Air, Details: Orbital Debris, Threat Level: 71, Location: North Sea
+[Mon Apr 14 20:25:29 2025] COMMAND      Encrypted command: frppdqg:odxqfk|wdujhw:Qruwk Vhd
+[Mon Apr 14 20:25:29 2025] COMMAND      Decrypted command: command:launch|target:North Sea
+[Mon Apr 14 20:25:29 2025] COMMAND      Sent command to 127.0.0.1:8081
+[Mon Apr 14 20:25:29 2025] COMMAND      Sent command to 127.0.0.1:8082
+[Mon Apr 14 20:25:32 2025] SIMULATION   Simulation running: 35 seconds remaining
+[Mon Apr 14 20:25:34 2025] MESSAGE      Encrypted message: vrxufh:Udgdu|wbsh:Dlu|gdwd:Plvvloh Vwulnh|wkuhdw_ohyho:24|orfdwlrq:Hqjolvk Fkdqqho
+[Mon Apr 14 20:25:34 2025] MESSAGE      Decrypted message: source:Radar|type:Air|data:Missile Strike|threat_level:24|location:English Channel
+[Mon Apr 14 20:25:34 2025] THREAT       Source: Radar, Type: Air, Details: Missile Strike, Threat Level: 24, Location: English Channel
+[Mon Apr 14 20:25:35 2025] MESSAGE      Encrypted message: vrxufh:Vdwhoolwh|wbsh:Vhd|gdwd:Edoolvwlf Plvvloh|wkuhdw_ohyho:31|orfdwlrq:Dufwlf Rfhdq
+[Mon Apr 14 20:25:35 2025] MESSAGE      Decrypted message: source:Satellite|type:Sea|data:Ballistic Missile|threat_level:31|location:Arctic Ocean
+[Mon Apr 14 20:25:35 2025] THREAT       Source: Satellite, Type: Sea, Details: Ballistic Missile, Threat Level: 31, Location: Arctic Ocean
+[Mon Apr 14 20:25:37 2025] SIMULATION   Simulation running: 30 seconds remaining
+[Mon Apr 14 20:25:39 2025] CONNECTION   Client 127.0.0.1:8083 disconnected: closed connection
+[Mon Apr 14 20:25:40 2025] CONNECTION   Client 127.0.0.1:8084 disconnected: closed connection
+[Mon Apr 14 20:25:42 2025] SIMULATION   Simulation running: 25 seconds remaining
+[Mon Apr 14 20:25:47 2025] SIMULATION   Simulation running: 20 seconds remaining
+[Mon Apr 14 20:25:52 2025] SIMULATION   Simulation running: 15 seconds remaining
+[Mon Apr 14 20:25:57 2025] SIMULATION   Simulation running: 10 seconds remaining
+[Mon Apr 14 20:26:02 2025] SIMULATION   Simulation running: 5 seconds remaining
+[Mon Apr 14 20:26:07 2025] SUMMARY      Summary generated in nuclearControl_summary.txt
+[Mon Apr 14 20:26:07 2025] SHUTDOWN     Nuclear Control terminated
