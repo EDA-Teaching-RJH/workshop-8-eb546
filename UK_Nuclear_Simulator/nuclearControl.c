@@ -8,7 +8,7 @@
 #include <time.h>
 #include <pthread.h>
 #include <ctype.h>
-#include <signal.h>
+#include <errno.h>
 
 #define PORT_SILO 8081
 #define PORT_SUB 8082
@@ -44,13 +44,15 @@ void init_log_file(void) {
         fprintf(fp, "Simulation Start: %s", ctime(&now));
         fprintf(fp, "=============================\n\n");
         fclose(fp);
+    } else {
+        fprintf(stderr, "Failed to create log file: %s (%s)\n", LOG_FILE, strerror(errno));
     }
 }
 
 void log_event(const char *event_type, const char *details) {
     FILE *fp = fopen(LOG_FILE, "a");
     if (!fp) {
-        fprintf(stderr, "Failed to open log file: %s\n", LOG_FILE);
+        fprintf(stderr, "Failed to open log file: %s (%s)\n", LOG_FILE, strerror(errno));
         return;
     }
     time_t now = time(NULL);
@@ -89,7 +91,9 @@ void caesar_decrypt(const char *ciphertext, char *plaintext, size_t len) {
 int parse_intel(const char *message, Intel *intel) {
     char *copy = strdup(message);
     if (!copy) {
-        log_event("ERROR", "Memory allocation failed during parsing");
+        char log_msg[256];
+        snprintf(log_msg, sizeof(log_msg), "Memory allocation failed: %s", strerror(errno));
+        log_event("ERROR", log_msg);
         return 0;
     }
 
@@ -113,18 +117,54 @@ int parse_intel(const char *message, Intel *intel) {
         } else if (strcmp(key, "threat_level") == 0) {
             char *endptr;
             intel->threat_level = strtod(value, &endptr);
-            if (*endptr != '\0') valid = 0;
+            if (*endptr != '\0' || intel->threat_level < 0) {
+                log_event("ERROR", "Invalid threat_level format");
+                valid = 0;
+            }
         } else if (strcmp(key, "location") == 0) {
             strncpy(intel->location, value, sizeof(intel->location) - 1);
         }
         token = strtok(NULL, "|");
     }
     if (!valid || !intel->source[0] || !intel->type[0]) {
-        log_event("ERROR", "Incomplete or invalid intelligence data");
+        char log_msg[256];
+        snprintf(log_msg, sizeof(log_msg), "Incomplete data: source=%s, type=%s",
+                 intel->source, intel->type);
+        log_event("ERROR", log_msg);
         valid = 0;
     }
     free(copy);
     return valid;
+}
+
+void forward_threat(Client *clients, size_t client_count, const Intel *intel) {
+    if (intel->threat_level <= 0.7) return;
+
+    char command[512];
+    char ciphertext[BUFFER_SIZE];
+    char log_msg[LOG_MSG_SIZE];
+    snprintf(command, sizeof(command),
+             "source:%s|type:%s|data:%s|threat_level:%.2f|location:%s",
+             intel->source, intel->type, intel->data, intel->threat_level, intel->location);
+    caesar_encrypt(command, ciphertext, sizeof(ciphertext));
+
+    snprintf(log_msg, sizeof(log_msg), "Forwarding threat: [Decrypted] %.500s -> [Encrypted] %.500s",
+             command, ciphertext);
+    log_event("THREAT", log_msg);
+
+    for (size_t i = 0; i < client_count; i++) {
+        if (clients[i].port == PORT_SILO || clients[i].port == PORT_SUB) {
+            if (send(clients[i].sock, ciphertext, strlen(ciphertext), 0) < 0) {
+                snprintf(log_msg, sizeof(log_msg), "Failed to forward threat to %s:%d: %s",
+                         clients[i].ip, clients[i].port, strerror(errno));
+                log_event("ERROR", log_msg);
+            } else {
+                snprintf(log_msg, sizeof(log_msg), "Threat forwarded to %s:%d",
+                         clients[i].ip, clients[i].port);
+                log_event("THREAT", log_msg);
+            }
+        }
+    }
 }
 
 void *handle_client(void *arg) {
@@ -133,6 +173,15 @@ void *handle_client(void *arg) {
     char plaintext[BUFFER_SIZE];
     Intel intel;
     char log_msg[LOG_MSG_SIZE];
+    static Client *clients[MAX_CLIENTS];
+    static size_t client_count = 0;
+    static pthread_mutex_t clients_mutex = PTHREAD_MUTEX_INITIALIZER;
+
+    pthread_mutex_lock(&clients_mutex);
+    if (client_count < MAX_CLIENTS) {
+        clients[client_count++] = client;
+    }
+    pthread_mutex_unlock(&clients_mutex);
 
     snprintf(log_msg, sizeof(log_msg), "Connection established with %s:%d", client->ip, client->port);
     log_event("CONNECTION", log_msg);
@@ -142,7 +191,8 @@ void *handle_client(void *arg) {
     while (client->running && time(NULL) - start_time < SIMULATION_DURATION) {
         ssize_t bytes = recv(client->sock, buffer, sizeof(buffer) - 1, 0);
         if (bytes <= 0) {
-            snprintf(log_msg, sizeof(log_msg), "Disconnected from %s:%d", client->ip, client->port);
+            snprintf(log_msg, sizeof(log_msg), "Disconnected from %s:%d: %s",
+                     client->ip, client->port, bytes == 0 ? "Client closed connection" : strerror(errno));
             log_event("CONNECTION", log_msg);
             break;
         }
@@ -158,6 +208,10 @@ void *handle_client(void *arg) {
                      "Intelligence: Source=%s, Type=%s, Details=%s, ThreatLevel=%.2f, Location=%s",
                      intel.source, intel.type, intel.data, intel.threat_level, intel.location);
             log_event("THREAT", log_msg);
+
+            pthread_mutex_lock(&clients_mutex);
+            forward_threat(clients, client_count, &intel);
+            pthread_mutex_unlock(&clients_mutex);
         } else {
             snprintf(log_msg, sizeof(log_msg), "Parsing failed for message: %.1000s", plaintext);
             log_event("ERROR", log_msg);
@@ -167,6 +221,16 @@ void *handle_client(void *arg) {
     snprintf(log_msg, sizeof(log_msg), "Client %s:%d terminated", client->ip, client->port);
     log_event("SHUTDOWN", log_msg);
     close(client->sock);
+
+    pthread_mutex_lock(&clients_mutex);
+    for (size_t i = 0; i < client_count; i++) {
+        if (clients[i] == client) {
+            clients[i] = clients[--client_count];
+            break;
+        }
+    }
+    pthread_mutex_unlock(&clients_mutex);
+
     free(client);
     return NULL;
 }
@@ -190,35 +254,15 @@ void simulate_war_test(Client *clients, size_t client_count) {
              intel.source, intel.type, intel.data, intel.threat_level, intel.location);
     log_event("WAR_TEST", log_msg);
 
-    if (intel.threat_level > 0.7) {
-        char command[256];
-        char ciphertext[512];
-        snprintf(command, sizeof(command), "command:launch|target:%s", intel.location);
-        caesar_encrypt(command, ciphertext, sizeof(ciphertext));
-        snprintf(log_msg, sizeof(log_msg), "Command issued: [Decrypted] %s -> [Encrypted] %.500s",
-                 command, ciphertext);
-        log_event("COMMAND", log_msg);
-
-        for (size_t i = 0; i < client_count; i++) {
-            if (clients[i].port == PORT_SILO || clients[i].port == PORT_SUB) {
-                if (send(clients[i].sock, ciphertext, strlen(ciphertext), 0) < 0) {
-                    snprintf(log_msg, sizeof(log_msg), "Failed to send command to %s:%d",
-                             clients[i].ip, clients[i].port);
-                    log_event("ERROR", log_msg);
-                } else {
-                    snprintf(log_msg, sizeof(log_msg), "Command sent to %s:%d",
-                             clients[i].ip, clients[i].port);
-                    log_event("COMMAND", log_msg);
-                }
-            }
-        }
-    }
+    forward_threat(clients, client_count, &intel);
 }
 
 int start_server(int port) {
     int server_sock = socket(AF_INET, SOCK_STREAM, 0);
     if (server_sock < 0) {
-        log_event("ERROR", "Socket creation failed");
+        char log_msg[256];
+        snprintf(log_msg, sizeof(log_msg), "Socket creation failed: %s", strerror(errno));
+        log_event("ERROR", log_msg);
         return -1;
     }
 
@@ -229,19 +273,25 @@ int start_server(int port) {
 
     const int opt = 1;
     if (setsockopt(server_sock, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) < 0) {
-        log_event("ERROR", "Failed to set socket options");
+        char log_msg[256];
+        snprintf(log_msg, sizeof(log_msg), "Failed to set socket options: %s", strerror(errno));
+        log_event("ERROR", log_msg);
         close(server_sock);
         return -1;
     }
 
     if (bind(server_sock, (struct sockaddr *)&server_addr, sizeof(server_addr)) < 0) {
-        log_event("ERROR", "Socket bind failed");
+        char log_msg[256];
+        snprintf(log_msg, sizeof(log_msg), "Socket bind failed: %s", strerror(errno));
+        log_event("ERROR", log_msg);
         close(server_sock);
         return -1;
     }
 
     if (listen(server_sock, 5) < 0) {
-        log_event("ERROR", "Socket listen failed");
+        char log_msg[256];
+        snprintf(log_msg, sizeof(log_msg), "Socket listen failed: %s", strerror(errno));
+        log_event("ERROR", log_msg);
         close(server_sock);
         return -1;
     }
@@ -283,13 +333,17 @@ int main(int argc, char *argv[]) {
         socklen_t addr_len = sizeof(client_addr);
         int client_sock = accept(server_socks[i], (struct sockaddr *)&client_addr, &addr_len);
         if (client_sock < 0) {
-            log_event("ERROR", "Failed to accept client connection");
+            char log_msg[256];
+            snprintf(log_msg, sizeof(log_msg), "Failed to accept client: %s", strerror(errno));
+            log_event("ERROR", log_msg);
             continue;
         }
 
         clients[client_count] = malloc(sizeof(Client));
         if (!clients[client_count]) {
-            log_event("ERROR", "Memory allocation failed for client");
+            char log_msg[256];
+            snprintf(log_msg, sizeof(log_msg), "Memory allocation failed: %s", strerror(errno));
+            log_event("ERROR", log_msg);
             close(client_sock);
             continue;
         }
@@ -299,7 +353,9 @@ int main(int argc, char *argv[]) {
         inet_ntop(AF_INET, &client_addr.sin_addr, clients[client_count]->ip, INET_ADDRSTRLEN);
 
         if (pthread_create(&threads[client_count], NULL, handle_client, clients[client_count]) != 0) {
-            log_event("ERROR", "Failed to create client thread");
+            char log_msg[256];
+            snprintf(log_msg, sizeof(log_msg), "Failed to create client thread: %s", strerror(errno));
+            log_event("ERROR", log_msg);
             close(client_sock);
             free(clients[client_count]);
             continue;
@@ -308,6 +364,7 @@ int main(int argc, char *argv[]) {
     }
 
     if (test_mode) {
+        sleep(2); // Allow clients to connect
         simulate_war_test(clients, client_count);
     }
 
@@ -327,9 +384,6 @@ int main(int argc, char *argv[]) {
     }
     for (size_t i = 0; i < MAX_CLIENTS; i++) {
         close(server_socks[i]);
-    }
-    for (size_t i = 0; i < client_count; i++) {
-        close(clients[i]->sock);
     }
 
     log_event("SHUTDOWN", "Nuclear Control System terminated");
