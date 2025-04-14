@@ -1,0 +1,66 @@
+[Mon Apr 14 16:33:22 2025]  CONNECTION    Connected to Nuclear Control
+[Mon Apr 14 16:33:22 2025]  MESSAGE       Encrypted Message:  vrxufh:Vdwhoolwh|wbsh:Vhd|gdwd:Qdydo Iohhw|wkuhdw_ohyho:0.86|orfdwlrq:Phglwhuudqhdq
+[Mon Apr 14 16:33:22 2025]  MESSAGE       Original Message:  source:Satellite|type:Sea|data:Naval Fleet|threat_level:0.86|location:Mediterranean
+[Mon Apr 14 16:33:22 2025]  INTEL         Intelligence Sent:  Type:  Sea ,  Details:  Naval Fleet    ,  Threat Level:  0.86,  Location:  Mediterranean
+[Mon Apr 14 16:33:27 2025]  MESSAGE       Encrypted Message:  vrxufh:Vdwhoolwh|wbsh:Dlu|gdwd:Edoolvwlf Plvvloh|wkuhdw_ohyho:0.95|orfdwlrq:Dufwlf Rfhdq
+[Mon Apr 14 16:33:27 2025]  MESSAGE       Original Message:  source:Satellite|type:Air|data:Ballistic Missile|threat_level:0.95|location:Arctic Ocean
+[Mon Apr 14 16:33:27 2025]  INTEL         Intelligence Sent:  Type:  Air ,  Details:  Ballistic Missile,  Threat Level:  0.95,  Location:  Arctic Ocean
+[Mon Apr 14 16:33:32 2025]  MESSAGE       Encrypted Message:  vrxufh:Vdwhoolwh|wbsh:Dlu|gdwd:Vdwhoolwh Dqrpdob|wkuhdw_ohyho:0.95|orfdwlrq:Eduhqwv Vhd
+[Mon Apr 14 16:33:32 2025]  MESSAGE       Original Message:  source:Satellite|type:Air|data:Satellite Anomaly|threat_level:0.95|location:Barents Sea
+[Mon Apr 14 16:33:32 2025]  INTEL         Intelligence Sent:  Type:  Air ,  Details:  Satellite Anomaly,  Threat Level:  0.95,  Location:  Barents Sea
+[Mon Apr 14 16:33:37 2025]  MESSAGE       Encrypted Message:  vrxufh:Vdwhoolwh|wbsh:Vhd|gdwd:Qdydo Iohhw|wkuhdw_ohyho:0.82|orfdwlrq:Phglwhuudqhdq
+[Mon Apr 14 16:33:37 2025]  MESSAGE       Original Message:  source:Satellite|type:Sea|data:Naval Fleet|threat_level:0.82|location:Mediterranean
+[Mon Apr 14 16:33:37 2025]  INTEL         Intelligence Sent:  Type:  Sea ,  Details:  Naval Fleet    ,  Threat Level:  0.82,  Location:  Mediterranean
+[Mon Apr 14 16:33:42 2025]  MESSAGE       Encrypted Message:  vrxufh:Vdwhoolwh|wbsh:Dlu|gdwd:Edoolvwlf Plvvloh|wkuhdw_ohyho:0.71|orfdwlrq:Dufwlf Rfhdq
+[Mon Apr 14 16:33:42 2025]  MESSAGE       Original Message:  source:Satellite|type:Air|data:Ballistic Missile|threat_level:0.71|location:Arctic Ocean
+[Mon Apr 14 16:33:42 2025]  INTEL         Intelligence Sent:  Type:  Air ,  Details:  Ballistic Missile,  Threat Level:  0.71,  Location:  Arctic Ocean
+[Mon Apr 14 16:33:47 2025]  MESSAGE       Encrypted Message:  vrxufh:Vdwhoolwh|wbsh:Dlu|gdwd:Vdwhoolwh Dqrpdob|wkuhdw_ohyho:0.77|orfdwlrq:Eduhqwv Vhd
+[Mon Apr 14 16:33:47 2025]  MESSAGE       Original Message:  source:Satellite|type:Air|data:Satellite Anomaly|threat_level:0.77|location:Barents Sea
+[Mon Apr 14 16:33:47 2025]  INTEL         Intelligence Sent:  Type:  Air ,  Details:  Satellite Anomaly,  Threat Level:  0.77,  Location:  Barents Sea
+[Mon Apr 14 16:33:52 2025]  MESSAGE       Encrypted Message:  vrxufh:Vdwhoolwh|wbsh:Dlu|gdwd:Vdwhoolwh Dqrpdob|wkuhdw_ohyho:0.89|orfdwlrq:Eduhqwv Vhd
+[Mon Apr 14 16:33:52 2025]  MESSAGE       Original Message:  source:Satellite|type:Air|data:Satellite Anomaly|threat_level:0.89|location:Barents Sea
+[Mon Apr 14 16:33:52 2025]  INTEL         Intelligence Sent:  Type:  Air ,  Details:  Satellite Anomaly,  Threat Level:  0.89,  Location:  Barents Sea
+[Mon Apr 14 16:33:57 2025]  MESSAGE       Encrypted Message:  vrxufh:Vdwhoolwh|wbsh:Dlu|gdwd:Vdwhoolwh Dqrpdob|wkuhdw_ohyho:0.86|orfdwlrq:Eduhqwv Vhd
+[Mon Apr 14 16:33:57 2025]  MESSAGE       Original Message:  source:Satellite|type:Air|data:Satellite Anomaly|threat_level:0.86|location:Barents Sea
+[Mon Apr 14 16:33:57 2025]  INTEL         Intelligence Sent:  Type:  Air ,  Details:  Satellite Anomaly,  Threat Level:  0.86,  Location:  Barents Sea
+[Mon Apr 14 16:34:02 2025]  MESSAGE       Encrypted Message:  vrxufh:Vdwhoolwh|wbsh:Dlu|gdwd:Edoolvwlf Plvvloh|wkuhdw_ohyho:0.76|orfdwlrq:Dufwlf Rfhdq
+[Mon Apr 14 16:34:02 2025]  MESSAGE       Original Message:  source:Satellite|type:Air|data:Ballistic Missile|threat_level:0.76|location:Arctic Ocean
+[Mon Apr 14 16:34:02 2025]  INTEL         Intelligence Sent:  Type:  Air ,  Details:  Ballistic Missile,  Threat Level:  0.76,  Location:  Arctic Ocean
+[Mon Apr 14 16:34:07 2025]  MESSAGE       Encrypted Message:  vrxufh:Vdwhoolwh|wbsh:Vhd|gdwd:Qdydo Iohhw|wkuhdw_ohyho:0.86|orfdwlrq:Phglwhuudqhdq
+[Mon Apr 14 16:34:07 2025]  MESSAGE       Original Message:  source:Satellite|type:Sea|data:Naval Fleet|threat_level:0.86|location:Mediterranean
+[Mon Apr 14 16:34:07 2025]  INTEL         Intelligence Sent:  Type:  Sea ,  Details:  Naval Fleet    ,  Threat Level:  0.86,  Location:  Mediterranean
+[Mon Apr 14 16:34:12 2025]  MESSAGE       Encrypted Message:  vrxufh:Vdwhoolwh|wbsh:Dlu|gdwd:Vdwhoolwh Dqrpdob|wkuhdw_ohyho:0.78|orfdwlrq:Eduhqwv Vhd
+[Mon Apr 14 16:34:12 2025]  MESSAGE       Original Message:  source:Satellite|type:Air|data:Satellite Anomaly|threat_level:0.78|location:Barents Sea
+[Mon Apr 14 16:34:12 2025]  INTEL         Intelligence Sent:  Type:  Air ,  Details:  Satellite Anomaly,  Threat Level:  0.78,  Location:  Barents Sea
+[Mon Apr 14 16:34:17 2025]  MESSAGE       Encrypted Message:  vrxufh:Vdwhoolwh|wbsh:Dlu|gdwd:Edoolvwlf Plvvloh|wkuhdw_ohyho:0.79|orfdwlrq:Dufwlf Rfhdq
+[Mon Apr 14 16:34:17 2025]  MESSAGE       Original Message:  source:Satellite|type:Air|data:Ballistic Missile|threat_level:0.79|location:Arctic Ocean
+[Mon Apr 14 16:34:17 2025]  INTEL         Intelligence Sent:  Type:  Air ,  Details:  Ballistic Missile,  Threat Level:  0.79,  Location:  Arctic Ocean
+[Mon Apr 14 16:34:22 2025]  MESSAGE       Encrypted Message:  vrxufh:Vdwhoolwh|wbsh:Dlu|gdwd:Vdwhoolwh Dqrpdob|wkuhdw_ohyho:0.90|orfdwlrq:Eduhqwv Vhd
+[Mon Apr 14 16:34:22 2025]  MESSAGE       Original Message:  source:Satellite|type:Air|data:Satellite Anomaly|threat_level:0.90|location:Barents Sea
+[Mon Apr 14 16:34:22 2025]  INTEL         Intelligence Sent:  Type:  Air ,  Details:  Satellite Anomaly,  Threat Level:  0.90,  Location:  Barents Sea
+[Mon Apr 14 16:34:27 2025]  MESSAGE       Encrypted Message:  vrxufh:Vdwhoolwh|wbsh:Dlu|gdwd:Vdwhoolwh Dqrpdob|wkuhdw_ohyho:0.83|orfdwlrq:Eduhqwv Vhd
+[Mon Apr 14 16:34:27 2025]  MESSAGE       Original Message:  source:Satellite|type:Air|data:Satellite Anomaly|threat_level:0.83|location:Barents Sea
+[Mon Apr 14 16:34:27 2025]  INTEL         Intelligence Sent:  Type:  Air ,  Details:  Satellite Anomaly,  Threat Level:  0.83,  Location:  Barents Sea
+[Mon Apr 14 16:34:32 2025]  MESSAGE       Encrypted Message:  vrxufh:Vdwhoolwh|wbsh:Vhd|gdwd:Qdydo Iohhw|wkuhdw_ohyho:0.95|orfdwlrq:Phglwhuudqhdq
+[Mon Apr 14 16:34:32 2025]  MESSAGE       Original Message:  source:Satellite|type:Sea|data:Naval Fleet|threat_level:0.95|location:Mediterranean
+[Mon Apr 14 16:34:32 2025]  INTEL         Intelligence Sent:  Type:  Sea ,  Details:  Naval Fleet    ,  Threat Level:  0.95,  Location:  Mediterranean
+[Mon Apr 14 16:34:37 2025]  MESSAGE       Encrypted Message:  vrxufh:Vdwhoolwh|wbsh:Dlu|gdwd:Vdwhoolwh Dqrpdob|wkuhdw_ohyho:0.82|orfdwlrq:Eduhqwv Vhd
+[Mon Apr 14 16:34:37 2025]  MESSAGE       Original Message:  source:Satellite|type:Air|data:Satellite Anomaly|threat_level:0.82|location:Barents Sea
+[Mon Apr 14 16:34:37 2025]  INTEL         Intelligence Sent:  Type:  Air ,  Details:  Satellite Anomaly,  Threat Level:  0.82,  Location:  Barents Sea
+[Mon Apr 14 16:34:42 2025]  MESSAGE       Encrypted Message:  vrxufh:Vdwhoolwh|wbsh:Dlu|gdwd:Edoolvwlf Plvvloh|wkuhdw_ohyho:0.88|orfdwlrq:Dufwlf Rfhdq
+[Mon Apr 14 16:34:42 2025]  MESSAGE       Original Message:  source:Satellite|type:Air|data:Ballistic Missile|threat_level:0.88|location:Arctic Ocean
+[Mon Apr 14 16:34:42 2025]  INTEL         Intelligence Sent:  Type:  Air ,  Details:  Ballistic Missile,  Threat Level:  0.88,  Location:  Arctic Ocean
+[Mon Apr 14 16:34:47 2025]  MESSAGE       Encrypted Message:  vrxufh:Vdwhoolwh|wbsh:Dlu|gdwd:Vdwhoolwh Dqrpdob|wkuhdw_ohyho:0.97|orfdwlrq:Eduhqwv Vhd
+[Mon Apr 14 16:34:47 2025]  MESSAGE       Original Message:  source:Satellite|type:Air|data:Satellite Anomaly|threat_level:0.97|location:Barents Sea
+[Mon Apr 14 16:34:47 2025]  INTEL         Intelligence Sent:  Type:  Air ,  Details:  Satellite Anomaly,  Threat Level:  0.97,  Location:  Barents Sea
+[Mon Apr 14 16:34:52 2025]  MESSAGE       Encrypted Message:  vrxufh:Vdwhoolwh|wbsh:Vhd|gdwd:Qdydo Iohhw|wkuhdw_ohyho:0.86|orfdwlrq:Phglwhuudqhdq
+[Mon Apr 14 16:34:52 2025]  MESSAGE       Original Message:  source:Satellite|type:Sea|data:Naval Fleet|threat_level:0.86|location:Mediterranean
+[Mon Apr 14 16:34:52 2025]  INTEL         Intelligence Sent:  Type:  Sea ,  Details:  Naval Fleet    ,  Threat Level:  0.86,  Location:  Mediterranean
+[Mon Apr 14 16:34:57 2025]  MESSAGE       Encrypted Message:  vrxufh:Vdwhoolwh|wbsh:Vhd|gdwd:Qdydo Iohhw|wkuhdw_ohyho:0.92|orfdwlrq:Phglwhuudqhdq
+[Mon Apr 14 16:34:57 2025]  MESSAGE       Original Message:  source:Satellite|type:Sea|data:Naval Fleet|threat_level:0.92|location:Mediterranean
+[Mon Apr 14 16:34:57 2025]  INTEL         Intelligence Sent:  Type:  Sea ,  Details:  Naval Fleet    ,  Threat Level:  0.92,  Location:  Mediterranean
+[Mon Apr 14 16:35:02 2025]  MESSAGE       Encrypted Message:  vrxufh:Vdwhoolwh|wbsh:Dlu|gdwd:Edoolvwlf Plvvloh|wkuhdw_ohyho:0.73|orfdwlrq:Dufwlf Rfhdq
+[Mon Apr 14 16:35:02 2025]  MESSAGE       Original Message:  source:Satellite|type:Air|data:Ballistic Missile|threat_level:0.73|location:Arctic Ocean
+[Mon Apr 14 16:35:02 2025]  INTEL         Intelligence Sent:  Type:  Air ,  Details:  Ballistic Missile,  Threat Level:  0.73,  Location:  Arctic Ocean
+[Mon Apr 14 16:35:07 2025]  MESSAGE       Encrypted Message:  vrxufh:Vdwhoolwh|wbsh:Dlu|gdwd:Edoolvwlf Plvvloh|wkuhdw_ohyho:0.99|orfdwlrq:Dufwlf Rfhdq
+[Mon Apr 14 16:35:07 2025]  MESSAGE       Original Message:  source:Satellite|type:Air|data:Ballistic Missile|threat_level:0.99|location:Arctic Ocean

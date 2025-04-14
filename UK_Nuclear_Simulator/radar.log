@@ -1,0 +1,72 @@
+[Mon Apr 14 16:33:14 2025]  CONNECTION    Connected to Nuclear Control
+[Mon Apr 14 16:33:14 2025]  MESSAGE       Encrypted Message:  vrxufh:Udgdu|wbsh:Dlu|gdwd:Plvvloh Vwulnh|wkuhdw_ohyho:0.26|orfdwlrq:Hqjolvk Fkdqqho
+[Mon Apr 14 16:33:14 2025]  MESSAGE       Original Message:  source:Radar|type:Air|data:Missile Strike|threat_level:0.26|location:English Channel
+[Mon Apr 14 16:33:14 2025]  INTEL         Intelligence Sent:  Type:  Air,  Details:  Missile Strike ,  Threat Level:  0.26,  Location:  English Channel
+[Mon Apr 14 16:33:19 2025]  MESSAGE       Encrypted Message:  vrxufh:Udgdu|wbsh:Dlu|gdwd:Hqhpb Dlufudiw|wkuhdw_ohyho:0.35|orfdwlrq:Qruwk Dwodqwlf
+[Mon Apr 14 16:33:19 2025]  MESSAGE       Original Message:  source:Radar|type:Air|data:Enemy Aircraft|threat_level:0.35|location:North Atlantic
+[Mon Apr 14 16:33:19 2025]  INTEL         Intelligence Sent:  Type:  Air,  Details:  Enemy Aircraft ,  Threat Level:  0.35,  Location:  North Atlantic
+[Mon Apr 14 16:33:24 2025]  MESSAGE       Encrypted Message:  vrxufh:Udgdu|wbsh:Dlu|gdwd:Gurqh Vzdup|wkuhdw_ohyho:0.35|orfdwlrq:Edowlf Vhd
+[Mon Apr 14 16:33:24 2025]  MESSAGE       Original Message:  source:Radar|type:Air|data:Drone Swarm|threat_level:0.35|location:Baltic Sea
+[Mon Apr 14 16:33:24 2025]  INTEL         Intelligence Sent:  Type:  Air,  Details:  Drone Swarm    ,  Threat Level:  0.35,  Location:  Baltic Sea
+[Mon Apr 14 16:33:29 2025]  MESSAGE       Encrypted Message:  vrxufh:Udgdu|wbsh:Dlu|gdwd:Plvvloh Vwulnh|wkuhdw_ohyho:0.22|orfdwlrq:Hqjolvk Fkdqqho
+[Mon Apr 14 16:33:29 2025]  MESSAGE       Original Message:  source:Radar|type:Air|data:Missile Strike|threat_level:0.22|location:English Channel
+[Mon Apr 14 16:33:29 2025]  INTEL         Intelligence Sent:  Type:  Air,  Details:  Missile Strike ,  Threat Level:  0.22,  Location:  English Channel
+[Mon Apr 14 16:33:34 2025]  MESSAGE       Encrypted Message:  vrxufh:Udgdu|wbsh:Dlu|gdwd:Hqhpb Dlufudiw|wkuhdw_ohyho:0.11|orfdwlrq:Qruwk Dwodqwlf
+[Mon Apr 14 16:33:34 2025]  MESSAGE       Original Message:  source:Radar|type:Air|data:Enemy Aircraft|threat_level:0.11|location:North Atlantic
+[Mon Apr 14 16:33:34 2025]  INTEL         Intelligence Sent:  Type:  Air,  Details:  Enemy Aircraft ,  Threat Level:  0.11,  Location:  North Atlantic
+[Mon Apr 14 16:33:39 2025]  MESSAGE       Encrypted Message:  vrxufh:Udgdu|wbsh:Dlu|gdwd:Gurqh Vzdup|wkuhdw_ohyho:0.77|orfdwlrq:Edowlf Vhd
+[Mon Apr 14 16:33:39 2025]  MESSAGE       Original Message:  source:Radar|type:Air|data:Drone Swarm|threat_level:0.77|location:Baltic Sea
+[Mon Apr 14 16:33:39 2025]  INTEL         Intelligence Sent:  Type:  Air,  Details:  Drone Swarm    ,  Threat Level:  0.77,  Location:  Baltic Sea
+[Mon Apr 14 16:33:44 2025]  MESSAGE       Encrypted Message:  vrxufh:Udgdu|wbsh:Dlu|gdwd:Gurqh Vzdup|wkuhdw_ohyho:0.89|orfdwlrq:Edowlf Vhd
+[Mon Apr 14 16:33:44 2025]  MESSAGE       Original Message:  source:Radar|type:Air|data:Drone Swarm|threat_level:0.89|location:Baltic Sea
+[Mon Apr 14 16:33:44 2025]  INTEL         Intelligence Sent:  Type:  Air,  Details:  Drone Swarm    ,  Threat Level:  0.89,  Location:  Baltic Sea
+[Mon Apr 14 16:33:49 2025]  MESSAGE       Encrypted Message:  vrxufh:Udgdu|wbsh:Dlu|gdwd:Gurqh Vzdup|wkuhdw_ohyho:0.86|orfdwlrq:Edowlf Vhd
+[Mon Apr 14 16:33:49 2025]  MESSAGE       Original Message:  source:Radar|type:Air|data:Drone Swarm|threat_level:0.86|location:Baltic Sea
+[Mon Apr 14 16:33:49 2025]  INTEL         Intelligence Sent:  Type:  Air,  Details:  Drone Swarm    ,  Threat Level:  0.86,  Location:  Baltic Sea
+[Mon Apr 14 16:33:54 2025]  MESSAGE       Encrypted Message:  vrxufh:Udgdu|wbsh:Dlu|gdwd:Hqhpb Dlufudiw|wkuhdw_ohyho:0.46|orfdwlrq:Qruwk Dwodqwlf
+[Mon Apr 14 16:33:54 2025]  MESSAGE       Original Message:  source:Radar|type:Air|data:Enemy Aircraft|threat_level:0.46|location:North Atlantic
+[Mon Apr 14 16:33:54 2025]  INTEL         Intelligence Sent:  Type:  Air,  Details:  Enemy Aircraft ,  Threat Level:  0.46,  Location:  North Atlantic
+[Mon Apr 14 16:33:59 2025]  MESSAGE       Encrypted Message:  vrxufh:Udgdu|wbsh:Dlu|gdwd:Plvvloh Vwulnh|wkuhdw_ohyho:0.56|orfdwlrq:Hqjolvk Fkdqqho
+[Mon Apr 14 16:33:59 2025]  MESSAGE       Original Message:  source:Radar|type:Air|data:Missile Strike|threat_level:0.56|location:English Channel
+[Mon Apr 14 16:33:59 2025]  INTEL         Intelligence Sent:  Type:  Air,  Details:  Missile Strike ,  Threat Level:  0.56,  Location:  English Channel
+[Mon Apr 14 16:34:04 2025]  MESSAGE       Encrypted Message:  vrxufh:Udgdu|wbsh:Dlu|gdwd:Gurqh Vzdup|wkuhdw_ohyho:0.18|orfdwlrq:Edowlf Vhd
+[Mon Apr 14 16:34:04 2025]  MESSAGE       Original Message:  source:Radar|type:Air|data:Drone Swarm|threat_level:0.18|location:Baltic Sea
+[Mon Apr 14 16:34:04 2025]  INTEL         Intelligence Sent:  Type:  Air,  Details:  Drone Swarm    ,  Threat Level:  0.18,  Location:  Baltic Sea
+[Mon Apr 14 16:34:09 2025]  MESSAGE       Encrypted Message:  vrxufh:Udgdu|wbsh:Dlu|gdwd:Hqhpb Dlufudiw|wkuhdw_ohyho:0.79|orfdwlrq:Qruwk Dwodqwlf
+[Mon Apr 14 16:34:09 2025]  MESSAGE       Original Message:  source:Radar|type:Air|data:Enemy Aircraft|threat_level:0.79|location:North Atlantic
+[Mon Apr 14 16:34:09 2025]  INTEL         Intelligence Sent:  Type:  Air,  Details:  Enemy Aircraft ,  Threat Level:  0.79,  Location:  North Atlantic
+[Mon Apr 14 16:34:14 2025]  MESSAGE       Encrypted Message:  vrxufh:Udgdu|wbsh:Dlu|gdwd:Gurqh Vzdup|wkuhdw_ohyho:0.90|orfdwlrq:Edowlf Vhd
+[Mon Apr 14 16:34:14 2025]  MESSAGE       Original Message:  source:Radar|type:Air|data:Drone Swarm|threat_level:0.90|location:Baltic Sea
+[Mon Apr 14 16:34:14 2025]  INTEL         Intelligence Sent:  Type:  Air,  Details:  Drone Swarm    ,  Threat Level:  0.90,  Location:  Baltic Sea
+[Mon Apr 14 16:34:19 2025]  MESSAGE       Encrypted Message:  vrxufh:Udgdu|wbsh:Dlu|gdwd:Gurqh Vzdup|wkuhdw_ohyho:0.23|orfdwlrq:Edowlf Vhd
+[Mon Apr 14 16:34:19 2025]  MESSAGE       Original Message:  source:Radar|type:Air|data:Drone Swarm|threat_level:0.23|location:Baltic Sea
+[Mon Apr 14 16:34:19 2025]  INTEL         Intelligence Sent:  Type:  Air,  Details:  Drone Swarm    ,  Threat Level:  0.23,  Location:  Baltic Sea
+[Mon Apr 14 16:34:24 2025]  MESSAGE       Encrypted Message:  vrxufh:Udgdu|wbsh:Dlu|gdwd:Plvvloh Vwulnh|wkuhdw_ohyho:0.65|orfdwlrq:Hqjolvk Fkdqqho
+[Mon Apr 14 16:34:24 2025]  MESSAGE       Original Message:  source:Radar|type:Air|data:Missile Strike|threat_level:0.65|location:English Channel
+[Mon Apr 14 16:34:24 2025]  INTEL         Intelligence Sent:  Type:  Air,  Details:  Missile Strike ,  Threat Level:  0.65,  Location:  English Channel
+[Mon Apr 14 16:34:29 2025]  MESSAGE       Encrypted Message:  vrxufh:Udgdu|wbsh:Dlu|gdwd:Gurqh Vzdup|wkuhdw_ohyho:0.82|orfdwlrq:Edowlf Vhd
+[Mon Apr 14 16:34:29 2025]  MESSAGE       Original Message:  source:Radar|type:Air|data:Drone Swarm|threat_level:0.82|location:Baltic Sea
+[Mon Apr 14 16:34:29 2025]  INTEL         Intelligence Sent:  Type:  Air,  Details:  Drone Swarm    ,  Threat Level:  0.82,  Location:  Baltic Sea
+[Mon Apr 14 16:34:34 2025]  MESSAGE       Encrypted Message:  vrxufh:Udgdu|wbsh:Dlu|gdwd:Hqhpb Dlufudiw|wkuhdw_ohyho:0.58|orfdwlrq:Qruwk Dwodqwlf
+[Mon Apr 14 16:34:34 2025]  MESSAGE       Original Message:  source:Radar|type:Air|data:Enemy Aircraft|threat_level:0.58|location:North Atlantic
+[Mon Apr 14 16:34:34 2025]  INTEL         Intelligence Sent:  Type:  Air,  Details:  Enemy Aircraft ,  Threat Level:  0.58,  Location:  North Atlantic
+[Mon Apr 14 16:34:39 2025]  MESSAGE       Encrypted Message:  vrxufh:Udgdu|wbsh:Dlu|gdwd:Gurqh Vzdup|wkuhdw_ohyho:0.67|orfdwlrq:Edowlf Vhd
+[Mon Apr 14 16:34:39 2025]  MESSAGE       Original Message:  source:Radar|type:Air|data:Drone Swarm|threat_level:0.67|location:Baltic Sea
+[Mon Apr 14 16:34:39 2025]  INTEL         Intelligence Sent:  Type:  Air,  Details:  Drone Swarm    ,  Threat Level:  0.67,  Location:  Baltic Sea
+[Mon Apr 14 16:34:44 2025]  MESSAGE       Encrypted Message:  vrxufh:Udgdu|wbsh:Dlu|gdwd:Plvvloh Vwulnh|wkuhdw_ohyho:0.26|orfdwlrq:Hqjolvk Fkdqqho
+[Mon Apr 14 16:34:44 2025]  MESSAGE       Original Message:  source:Radar|type:Air|data:Missile Strike|threat_level:0.26|location:English Channel
+[Mon Apr 14 16:34:44 2025]  INTEL         Intelligence Sent:  Type:  Air,  Details:  Missile Strike ,  Threat Level:  0.26,  Location:  English Channel
+[Mon Apr 14 16:34:49 2025]  MESSAGE       Encrypted Message:  vrxufh:Udgdu|wbsh:Dlu|gdwd:Plvvloh Vwulnh|wkuhdw_ohyho:0.62|orfdwlrq:Hqjolvk Fkdqqho
+[Mon Apr 14 16:34:49 2025]  MESSAGE       Original Message:  source:Radar|type:Air|data:Missile Strike|threat_level:0.62|location:English Channel
+[Mon Apr 14 16:34:49 2025]  INTEL         Intelligence Sent:  Type:  Air,  Details:  Missile Strike ,  Threat Level:  0.62,  Location:  English Channel
+[Mon Apr 14 16:34:54 2025]  MESSAGE       Encrypted Message:  vrxufh:Udgdu|wbsh:Dlu|gdwd:Hqhpb Dlufudiw|wkuhdw_ohyho:0.73|orfdwlrq:Qruwk Dwodqwlf
+[Mon Apr 14 16:34:54 2025]  MESSAGE       Original Message:  source:Radar|type:Air|data:Enemy Aircraft|threat_level:0.73|location:North Atlantic
+[Mon Apr 14 16:34:54 2025]  INTEL         Intelligence Sent:  Type:  Air,  Details:  Enemy Aircraft ,  Threat Level:  0.73,  Location:  North Atlantic
+[Mon Apr 14 16:34:59 2025]  MESSAGE       Encrypted Message:  vrxufh:Udgdu|wbsh:Dlu|gdwd:Hqhpb Dlufudiw|wkuhdw_ohyho:0.39|orfdwlrq:Qruwk Dwodqwlf
+[Mon Apr 14 16:34:59 2025]  MESSAGE       Original Message:  source:Radar|type:Air|data:Enemy Aircraft|threat_level:0.39|location:North Atlantic
+[Mon Apr 14 16:34:59 2025]  INTEL         Intelligence Sent:  Type:  Air,  Details:  Enemy Aircraft ,  Threat Level:  0.39,  Location:  North Atlantic
+[Mon Apr 14 16:35:04 2025]  MESSAGE       Encrypted Message:  vrxufh:Udgdu|wbsh:Dlu|gdwd:Gurqh Vzdup|wkuhdw_ohyho:0.77|orfdwlrq:Edowlf Vhd
+[Mon Apr 14 16:35:04 2025]  MESSAGE       Original Message:  source:Radar|type:Air|data:Drone Swarm|threat_level:0.77|location:Baltic Sea
+[Mon Apr 14 16:35:04 2025]  INTEL         Intelligence Sent:  Type:  Air,  Details:  Drone Swarm    ,  Threat Level:  0.77,  Location:  Baltic Sea
+[Mon Apr 14 16:35:09 2025]  MESSAGE       Encrypted Message:  vrxufh:Udgdu|wbsh:Dlu|gdwd:Gurqh Vzdup|wkuhdw_ohyho:0.84|orfdwlrq:Edowlf Vhd
+[Mon Apr 14 16:35:09 2025]  MESSAGE       Original Message:  source:Radar|type:Air|data:Drone Swarm|threat_level:0.84|location:Baltic Sea

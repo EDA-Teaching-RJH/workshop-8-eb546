@@ -7,8 +7,8 @@
 #include <arpa/inet.h>
 #include <time.h>
 #include <ctype.h>
-#include <sys/time.h> // Added for struct timeval
-#include <errno.h>    // Added for errno
+#include <sys/time.h>
+#include <errno.h>
 
 #define SERVER_IP "127.0.0.1"
 #define SERVER_PORT 8082
@@ -199,7 +199,7 @@ int main(void) {
 
         if (parse_command(plaintext, command, target, details)) {
             if (strcmp(command, "launch") == 0) {
-                snprintf(log_msg, sizeof(log_msg), "Attacking Satellite threat: %s at %s", details, target);
+                snprintf(log_msg, sizeof(log_msg), "Launching torpedoes at threat detected by satellite: %s at %s", details, target);
                 log_event("COMMAND", log_msg);
             } else {
                 snprintf(log_msg, sizeof(log_msg), "Unknown command: %s", command);

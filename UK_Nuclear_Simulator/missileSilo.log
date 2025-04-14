@@ -1,0 +1,24 @@
+[Mon Apr 14 16:33:06 2025]  CONNECTION    Connected to Nuclear Control
+[Mon Apr 14 16:33:39 2025]  MESSAGE       Encrypted Message:  frppdqg:odxqfk|wdujhw:Edowlf Vhd|ghwdlov:Gurqh Vzdup
+[Mon Apr 14 16:33:39 2025]  MESSAGE       Decrypted Message:  command:launch|target:Baltic Sea|details:Drone Swarm
+[Mon Apr 14 16:33:39 2025]  COMMAND       Attacking Radar threat:  at 
+[Mon Apr 14 16:33:44 2025]  MESSAGE       Encrypted Message:  frppdqg:odxqfk|wdujhw:Edowlf Vhd|ghwdlov:Gurqh Vzdup
+[Mon Apr 14 16:33:44 2025]  MESSAGE       Decrypted Message:  command:launch|target:Baltic Sea|details:Drone Swarm
+[Mon Apr 14 16:33:44 2025]  COMMAND       Attacking Radar threat:  at 
+[Mon Apr 14 16:33:49 2025]  MESSAGE       Encrypted Message:  frppdqg:odxqfk|wdujhw:Edowlf Vhd|ghwdlov:Gurqh Vzdup
+[Mon Apr 14 16:33:49 2025]  MESSAGE       Decrypted Message:  command:launch|target:Baltic Sea|details:Drone Swarm
+[Mon Apr 14 16:33:49 2025]  COMMAND       Attacking Radar threat:  at 
+[Mon Apr 14 16:34:09 2025]  MESSAGE       Encrypted Message:  frppdqg:odxqfk|wdujhw:Qruwk Dwodqwlf|ghwdlov:Hqhpb Dlufudiw
+[Mon Apr 14 16:34:09 2025]  MESSAGE       Decrypted Message:  command:launch|target:North Atlantic|details:Enemy Aircraft
+[Mon Apr 14 16:34:09 2025]  COMMAND       Attacking Radar threat:  at 
+[Mon Apr 14 16:34:14 2025]  MESSAGE       Encrypted Message:  frppdqg:odxqfk|wdujhw:Edowlf Vhd|ghwdlov:Gurqh Vzdup
+[Mon Apr 14 16:34:14 2025]  MESSAGE       Decrypted Message:  command:launch|target:Baltic Sea|details:Drone Swarm
+[Mon Apr 14 16:34:14 2025]  COMMAND       Attacking Radar threat:  at 
+[Mon Apr 14 16:34:29 2025]  MESSAGE       Encrypted Message:  frppdqg:odxqfk|wdujhw:Edowlf Vhd|ghwdlov:Gurqh Vzdup
+[Mon Apr 14 16:34:29 2025]  MESSAGE       Decrypted Message:  command:launch|target:Baltic Sea|details:Drone Swarm
+[Mon Apr 14 16:34:29 2025]  COMMAND       Attacking Radar threat:  at 
+[Mon Apr 14 16:34:54 2025]  MESSAGE       Encrypted Message:  frppdqg:odxqfk|wdujhw:Qruwk Dwodqwlf|ghwdlov:Hqhpb Dlufudiw
+[Mon Apr 14 16:34:54 2025]  MESSAGE       Decrypted Message:  command:launch|target:North Atlantic|details:Enemy Aircraft
+[Mon Apr 14 16:34:54 2025]  COMMAND       Attacking Radar threat:  at 
+[Mon Apr 14 16:35:02 2025]  CONNECTION    Disconnected from Nuclear Control (bytes: 0)
+[Mon Apr 14 16:35:02 2025]  SHUTDOWN      Missile Silo terminated after 2 minutes simulation
