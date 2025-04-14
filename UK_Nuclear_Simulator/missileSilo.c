@@ -18,39 +18,35 @@
 
 void init_log_file(void) {
     FILE *fp = fopen(LOG_FILE, "w");
-    if (fp) {
-        time_t now = time(NULL);
-        char *time_str = ctime(&now);
-        if (time_str) {
-            time_str[strlen(time_str) - 1] = '\0';
-            fprintf(fp, "===== Missile Silo Log =====\n");
-            fprintf(fp, "Simulation Start: %s\n", time_str);
-            fprintf(fp, "==========================\n\n");
-        }
-        fclose(fp);
-    } else {
-        fprintf(stderr, "Failed to create log file: %s (%s)\n", LOG_FILE, strerror(errno));
+    if (!fp) {
+        fprintf(stderr, "Failed to create log file: %s\n", strerror(errno));
+        return;
     }
+    time_t now = time(NULL);
+    char *time_str = ctime(&now);
+    time_str[strlen(time_str) - 1] = '\0';
+    fprintf(fp, "===== Missile Silo Log =====\n");
+    fprintf(fp, "Simulation Start: %s\n", time_str);
+    fprintf(fp, "==========================\n\n");
+    fclose(fp);
 }
 
 void log_event(const char *event_type, const char *details) {
     FILE *fp = fopen(LOG_FILE, "a");
     if (!fp) {
-        fprintf(stderr, "Failed to open log file: %s (%s)\n", LOG_FILE, strerror(errno));
+        fprintf(stderr, "Failed to open log file: %s\n", strerror(errno));
         return;
     }
     time_t now = time(NULL);
     char *time_str = ctime(&now);
-    if (time_str) {
-        time_str[strlen(time_str) - 1] = '\0';
-        fprintf(fp, "[%s] %-10s %s\n", time_str, event_type, details);
-    }
+    time_str[strlen(time_str) - 1] = '\0';
+    fprintf(fp, "[%s] %-10s %s\n", time_str, event_type, details);
     fclose(fp);
 }
 
 void caesar_decrypt(const char *ciphertext, char *plaintext, size_t len) {
     memset(plaintext, 0, len);
-    for (size_t i = 0; i < strlen(ciphertext) && i < len - 1; i++) {
+    for (size_t i = 0; ciphertext[i] && i < len - 1; i++) {
         if (isalpha((unsigned char)ciphertext[i])) {
             char base = isupper((unsigned char)ciphertext[i]) ? 'A' : 'a';
             plaintext[i] = (char)((ciphertext[i] - base - CAESAR_SHIFT + 26) % 26 + base);
@@ -73,17 +69,20 @@ int parse_command(const char *message, char *command, char *target) {
     target[0] = '\0';
     char *token = strtok(copy, "|");
     while (token) {
-        char *key = strtok(token, ":");
-        char *value = strtok(NULL, "");
-        if (key && value && value[0] != '\0') {
-            value++; // Skip the colon
-            if (strcmp(key, "command") == 0) {
-                strncpy(command, value, 19);
-                command[19] = '\0';
-            } else if (strcmp(key, "target") == 0) {
-                strncpy(target, value, 49);
-                target[49] = '\0';
-            }
+        char *colon = strchr(token, ':');
+        if (!colon || colon == token || !colon[1]) {
+            free(copy);
+            return 0;
+        }
+        *colon = '\0';
+        char *key = token;
+        char *value = colon + 1;
+        if (strcmp(key, "command") == 0) {
+            strncpy(command, value, 19);
+            command[19] = '\0';
+        } else if (strcmp(key, "target") == 0) {
+            strncpy(target, value, 49);
+            target[49] = '\0';
         }
         token = strtok(NULL, "|");
     }
@@ -92,7 +91,6 @@ int parse_command(const char *message, char *command, char *target) {
 }
 
 int main(void) {
-    srand((unsigned int)time(NULL));
     init_log_file();
     log_event("STARTUP", "Missile Silo System initializing");
 

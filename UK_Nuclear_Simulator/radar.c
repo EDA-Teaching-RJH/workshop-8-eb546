@@ -17,17 +17,17 @@
 
 void init_log_file(void) {
     FILE *fp = fopen(LOG_FILE, "w");
-    if (fp) {
-        time_t now = time(NULL);
-        char *time_str = ctime(&now);
-        if (time_str) {
-            time_str[strlen(time_str) - 1] = '\0';
-            fprintf(fp, "===== Radar Log =====\n");
-            fprintf(fp, "Simulation Start: %s\n", time_str);
-            fprintf(fp, "====================\n\n");
-        }
-        fclose(fp);
+    if (!fp) {
+        fprintf(stderr, "Failed to create log file: %s\n", LOG_FILE);
+        return;
     }
+    time_t now = time(NULL);
+    char *time_str = ctime(&now);
+    time_str[strlen(time_str) - 1] = '\0';
+    fprintf(fp, "===== Radar Log =====\n");
+    fprintf(fp, "Simulation Start: %s\n", time_str);
+    fprintf(fp, "====================\n\n");
+    fclose(fp);
 }
 
 void log_event(const char *event_type, const char *details) {
@@ -38,16 +38,14 @@ void log_event(const char *event_type, const char *details) {
     }
     time_t now = time(NULL);
     char *time_str = ctime(&now);
-    if (time_str) {
-        time_str[strlen(time_str) - 1] = '\0';
-        fprintf(fp, "[%s] %-10s %s\n", time_str, event_type, details);
-    }
+    time_str[strlen(time_str) - 1] = '\0';
+    fprintf(fp, "[%s] %-10s %s\n", time_str, event_type, details);
     fclose(fp);
 }
 
 void caesar_encrypt(const char *plaintext, char *ciphertext, size_t len) {
     memset(ciphertext, 0, len);
-    for (size_t i = 0; i < strlen(plaintext) && i < len - 1; i++) {
+    for (size_t i = 0; plaintext[i] && i < len - 1; i++) {
         if (isalpha((unsigned char)plaintext[i])) {
             char base = isupper((unsigned char)plaintext[i]) ? 'A' : 'a';
             ciphertext[i] = (char)((plaintext[i] - base + CAESAR_SHIFT) % 26 + base);
@@ -58,13 +56,13 @@ void caesar_encrypt(const char *plaintext, char *ciphertext, size_t len) {
 }
 
 void send_intel(int sock) {
-    const char *const threat_data[] = {"Enemy Aircraft", "Missile Strike", "Drone Swarm"};
-    const char *const locations[] = {"North Atlantic", "English Channel", "Baltic Sea"};
+    const char *threat_data[] = {"Enemy Aircraft", "Missile Strike", "Drone Swarm"};
+    const char *locations[] = {"North Atlantic", "English Channel", "Baltic Sea"};
     char message[512];
     char ciphertext[BUFFER_SIZE];
     char log_msg[BUFFER_SIZE];
     int idx = rand() % 3;
-    int threat_level = 10 + (rand() % 91);
+    int threat_level = (rand() % 100 < 20) ? 71 + (rand() % 30) : 10 + (rand() % 61); // Bias toward high threats
 
     snprintf(message, sizeof(message),
              "source:Radar|type:Air|data:%s|threat_level:%d|location:%s",

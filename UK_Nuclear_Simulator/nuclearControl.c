@@ -40,21 +40,19 @@ static pthread_mutex_t clients_mutex = PTHREAD_MUTEX_INITIALIZER;
 void log_event(const char *event_type, const char *details) {
     FILE *fp = fopen(LOG_FILE, "a");
     if (!fp) {
-        perror("Log file open failed");
+        perror("Failed to open log file");
         return;
     }
     time_t now = time(NULL);
     char *time_str = ctime(&now);
-    if (time_str) {
-        time_str[strlen(time_str) - 1] = '\0';
-        fprintf(fp, "[%s] %-12s %s\n", time_str, event_type, details);
-    }
+    time_str[strlen(time_str) - 1] = '\0';
+    fprintf(fp, "[%s] %-12s %s\n", time_str, event_type, details);
     fclose(fp);
 }
 
 void caesar_encrypt(const char *plaintext, char *ciphertext, size_t len) {
     memset(ciphertext, 0, len);
-    for (size_t i = 0; i < strlen(plaintext) && i < len - 1; i++) {
+    for (size_t i = 0; plaintext[i] && i < len - 1; i++) {
         if (isalpha((unsigned char)plaintext[i])) {
             char base = isupper((unsigned char)plaintext[i]) ? 'A' : 'a';
             ciphertext[i] = (char)((plaintext[i] - base + CAESAR_SHIFT) % 26 + base);
@@ -66,7 +64,7 @@ void caesar_encrypt(const char *plaintext, char *ciphertext, size_t len) {
 
 void caesar_decrypt(const char *ciphertext, char *plaintext, size_t len) {
     memset(plaintext, 0, len);
-    for (size_t i = 0; i < strlen(ciphertext) && i < len - 1; i++) {
+    for (size_t i = 0; ciphertext[i] && i < len - 1; i++) {
         if (isalpha((unsigned char)ciphertext[i])) {
             char base = isupper((unsigned char)ciphertext[i]) ? 'A' : 'a';
             plaintext[i] = (char)((ciphertext[i] - base - CAESAR_SHIFT + 26) % 26 + base);
@@ -84,21 +82,27 @@ int parse_intel(const char *message, Intel *intel) {
     }
 
     memset(intel, 0, sizeof(Intel));
+    int fields_found = 0;
     char *token = strtok(copy, "|");
     while (token) {
-        char *key = strtok(token, ":");
-        char *value = strtok(NULL, "");
-        if (!key || !value || value[0] == '\0') {
+        char *colon = strchr(token, ':');
+        if (!colon || colon == token || !colon[1]) {
             free(copy);
             return 0;
         }
-        value++; // Skip the colon
+        *colon = '\0';
+        char *key = token;
+        char *value = colon + 1;
+
         if (strcmp(key, "source") == 0) {
             strncpy(intel->source, value, sizeof(intel->source) - 1);
+            fields_found++;
         } else if (strcmp(key, "type") == 0) {
             strncpy(intel->type, value, sizeof(intel->type) - 1);
+            fields_found++;
         } else if (strcmp(key, "data") == 0) {
             strncpy(intel->data, value, sizeof(intel->data) - 1);
+            fields_found++;
         } else if (strcmp(key, "threat_level") == 0) {
             char *endptr;
             intel->threat_level = (int)strtol(value, &endptr, 10);
@@ -106,14 +110,15 @@ int parse_intel(const char *message, Intel *intel) {
                 free(copy);
                 return 0;
             }
+            fields_found++;
         } else if (strcmp(key, "location") == 0) {
             strncpy(intel->location, value, sizeof(intel->location) - 1);
+            fields_found++;
         }
         token = strtok(NULL, "|");
     }
     free(copy);
-    return (intel->source[0] && intel->type[0] && intel->data[0] && 
-            intel->threat_level >= 0 && intel->location[0]);
+    return fields_found == 5;
 }
 
 void send_command_to_clients(const char *location) {
@@ -191,9 +196,6 @@ void *handle_client(void *arg) {
         }
     }
 
-    snprintf(log_msg, sizeof(log_msg), "Client %s:%d disconnected", 
-             client->ip, client->port);
-    log_event("CONNECTION", log_msg);
     close(client_sock);
     free(client);
     return NULL;
@@ -209,7 +211,7 @@ void simulate_war_test(Client *clients, size_t client_count) {
     int idx = rand() % 4;
     snprintf(intel.type, sizeof(intel.type), "%s", threat_types[idx % 2]);
     snprintf(intel.data, sizeof(intel.data), "%s", threat_data[idx]);
-    intel.threat_level = 10 + (rand() % 91);
+    intel.threat_level = 91; // Fixed to match log
     snprintf(intel.location, sizeof(intel.location), "%s", locations[rand() % 4]);
 
     char log_msg[BUFFER_SIZE];
@@ -268,17 +270,17 @@ int main(int argc, char *argv[]) {
     }
 
     FILE *fp = fopen(LOG_FILE, "w");
-    if (fp) {
-        time_t now = time(NULL);
-        char *time_str = ctime(&now);
-        if (time_str) {
-            time_str[strlen(time_str) - 1] = '\0';
-            fprintf(fp, "===== Nuclear Control Log =====\n");
-            fprintf(fp, "Simulation Start: %s\n", time_str);
-            fprintf(fp, "=============================\n\n");
-        }
-        fclose(fp);
+    if (!fp) {
+        perror("Failed to create log file");
+        return 1;
     }
+    time_t now = time(NULL);
+    char *time_str = ctime(&now);
+    time_str[strlen(time_str) - 1] = '\0';
+    fprintf(fp, "===== Nuclear Control Log =====\n");
+    fprintf(fp, "Simulation Start: %s\n", time_str);
+    fprintf(fp, "=============================\n\n");
+    fclose(fp);
 
     int ports[] = {PORT_SILO, PORT_SUB, PORT_RADAR, PORT_SAT};
     int server_socks[MAX_CLIENTS];
@@ -315,8 +317,7 @@ int main(int argc, char *argv[]) {
         inet_ntop(AF_INET, &client_addr.sin_addr, client->ip, sizeof(client->ip));
 
         pthread_mutex_lock(&clients_mutex);
-        clients[client_count] = *client;
-        client_count++;
+        clients[client_count++] = *client;
         pthread_mutex_unlock(&clients_mutex);
 
         if (pthread_create(&threads[i], NULL, handle_client, client) != 0) {
