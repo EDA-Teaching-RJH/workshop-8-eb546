@@ -147,29 +147,21 @@ void *handle_client(void *arg) {
         snprintf(log_msg, sizeof(log_msg), "Decrypted message: %.1000s", plaintext);
         log_event("MESSAGE", log_msg);
 
-        // Split concatenated messages on "source:"
-        char *msg = plaintext;
-        char *next_msg;
-        while (msg && *msg) {
-            next_msg = strstr(msg, "source:");
-            if (next_msg && next_msg != msg) {
-                *next_msg = '\0'; // Temporarily terminate current message
-                next_msg += strlen("source:"); // Move to start of next message
-            } else {
-                next_msg = NULL; // No more messages
-            }
-
-            if (parse_intel(msg, &intel)) {
+        // Process the message directly if it starts with "source:"
+        if (strncmp(plaintext, "source:", 7) == 0) {
+            if (parse_intel(plaintext, &intel)) {
                 snprintf(log_msg, sizeof(log_msg), 
                          "Source: %s, Type: %s, Details: %s, Threat Level: %.2f, Location: %s",
                          intel.source, intel.type, intel.data, intel.threat_level, intel.location);
                 log_event("THREAT", log_msg);
             } else {
-                snprintf(log_msg, sizeof(log_msg), "Invalid message: %.1000s", msg);
+                snprintf(log_msg, sizeof(log_msg), "Invalid message: %.1000s", plaintext);
                 log_event("ERROR", "Invalid message format");
             }
-
-            msg = next_msg; // Process next message
+        } else {
+            // Handle potential malformed messages
+            snprintf(log_msg, sizeof(log_msg), "Invalid message: %.1000s", plaintext);
+            log_event("ERROR", "Invalid message format");
         }
     }
 
