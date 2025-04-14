@@ -32,6 +32,10 @@ typedef struct {
     int port;
 } Client;
 
+static Client clients[MAX_CLIENTS]; // Store clients for sending commands
+static size_t client_count = 0;
+static pthread_mutex_t clients_mutex = PTHREAD_MUTEX_INITIALIZER;
+
 void log_event(const char *event_type, const char *details) {
     FILE *fp = fopen(LOG_FILE, "a");
     if (fp == NULL) {
@@ -85,7 +89,6 @@ int parse_intel(const char *message, Intel *intel) {
         char *key = strtok(token, ":");
         char *value = strtok(NULL, ":");
         if (!key || !value) {
-            log_event("ERROR", "Malformed key-value pair");
             free(copy);
             return 0;
         }
@@ -101,7 +104,6 @@ int parse_intel(const char *message, Intel *intel) {
             char *endptr;
             intel->threat_level = strtod(value, &endptr);
             if (*endptr != '\0') {
-                log_event("ERROR", "Invalid threat_level format");
                 free(copy);
                 return 0;
             }
@@ -111,10 +113,36 @@ int parse_intel(const char *message, Intel *intel) {
         token = strtok(NULL, "|");
     }
     free(copy);
-    if (!has_source || !has_type) {
-        return 0; // Silently fail without logging
+    return (has_source && has_type);
+}
+
+void send_command_to_clients(const char *location) {
+    char command[256];
+    char ciphertext[512];
+    char log_msg[1024];
+    snprintf(command, sizeof(command), "command:launch|target:%s", location);
+    caesar_encrypt(command, ciphertext, sizeof(ciphertext));
+
+    snprintf(log_msg, sizeof(log_msg), "Encrypted command: %.500s", ciphertext);
+    log_event("COMMAND", log_msg);
+    snprintf(log_msg, sizeof(log_msg), "Decrypted command: %s", command);
+    log_event("COMMAND", log_msg);
+
+    pthread_mutex_lock(&clients_mutex);
+    for (size_t i = 0; i < client_count; i++) {
+        if (clients[i].port == PORT_SILO || clients[i].port == PORT_SUB) {
+            if (send(clients[i].sock, ciphertext, strlen(ciphertext), 0) < 0) {
+                snprintf(log_msg, sizeof(log_msg), "Failed to send command to %s:%d", 
+                         clients[i].ip, clients[i].port);
+                log_event("ERROR", log_msg);
+            } else {
+                snprintf(log_msg, sizeof(log_msg), "Sent command to %s:%d", 
+                         clients[i].ip, clients[i].port);
+                log_event("COMMAND", log_msg);
+            }
+        }
     }
-    return 1;
+    pthread_mutex_unlock(&clients_mutex);
 }
 
 void *handle_client(void *arg) {
@@ -147,19 +175,18 @@ void *handle_client(void *arg) {
         snprintf(log_msg, sizeof(log_msg), "Decrypted message: %.1000s", plaintext);
         log_event("MESSAGE", log_msg);
 
-        // Process the message directly if it starts with "source:"
-        if (strncmp(plaintext, "source:", 7) == 0) {
-            if (parse_intel(plaintext, &intel)) {
-                snprintf(log_msg, sizeof(log_msg), 
-                         "Source: %s, Type: %s, Details: %s, Threat Level: %.2f, Location: %s",
-                         intel.source, intel.type, intel.data, intel.threat_level, intel.location);
-                log_event("THREAT", log_msg);
-            } else {
-                snprintf(log_msg, sizeof(log_msg), "Invalid message: %.1000s", plaintext);
-                log_event("ERROR", "Invalid message format");
+        if (parse_intel(plaintext, &intel)) {
+            snprintf(log_msg, sizeof(log_msg), 
+                     "Source: %s, Type: %s, Details: %s, Threat Level: %.2f, Location: %s",
+                     intel.source, intel.type, intel.data, intel.threat_level, intel.location);
+            log_event("THREAT", log_msg);
+
+            // Send launch command for high-threat intel from Radar or Satellite
+            if (intel.threat_level > 0.7 && 
+                (strcmp(intel.source, "Radar") == 0 || strcmp(intel.source, "Satellite") == 0)) {
+                send_command_to_clients(intel.location);
             }
         } else {
-            // Handle potential malformed messages
             snprintf(log_msg, sizeof(log_msg), "Invalid message: %.1000s", plaintext);
             log_event("ERROR", "Invalid message format");
         }
@@ -193,30 +220,7 @@ void simulate_war_test(Client *clients, size_t client_count) {
     log_event("WAR_TEST", log_msg);
 
     if (intel.threat_level > 0.7) {
-        char command[256];
-        snprintf(command, sizeof(command), "command:launch|target:%s", intel.location);
-        char ciphertext[512];
-        caesar_encrypt(command, ciphertext, sizeof(ciphertext));
-        snprintf(log_msg, sizeof(log_msg), "Encrypted command: %.500s", ciphertext);
-        log_event("COMMAND", log_msg);
-        snprintf(log_msg, sizeof(log_msg), "Decrypted command: %s", command);
-        log_event("COMMAND", log_msg);
-
-        for (size_t i = 0; i < client_count; i++) {
-            if (clients[i].port == PORT_SILO || clients[i].port == PORT_SUB) {
-                if (send(clients[i].sock, ciphertext, strlen(ciphertext), 0) < 0) {
-                    snprintf(log_msg, sizeof(log_msg), 
-                             "Failed to send command to %s:%d", 
-                             clients[i].ip, clients[i].port);
-                    log_event("ERROR", log_msg);
-                } else {
-                    snprintf(log_msg, sizeof(log_msg), 
-                             "Sent command to %s:%d", 
-                             clients[i].ip, clients[i].port);
-                    log_event("COMMAND", log_msg);
-                }
-            }
-        }
+        send_command_to_clients(intel.location);
     }
 }
 
@@ -267,8 +271,6 @@ int main(int argc, char *argv[]) {
     int ports[] = {PORT_SILO, PORT_SUB, PORT_RADAR, PORT_SAT};
     int server_socks[MAX_CLIENTS];
     pthread_t threads[MAX_CLIENTS];
-    Client clients[MAX_CLIENTS];
-    size_t client_count = 0;
     time_t start_time = time(NULL);
 
     for (int i = 0; i < MAX_CLIENTS; i++) {
@@ -300,14 +302,17 @@ int main(int argc, char *argv[]) {
         client->port = ports[i];
         inet_ntop(AF_INET, &client_addr.sin_addr, client->ip, sizeof(client->ip));
 
+        pthread_mutex_lock(&clients_mutex);
         clients[client_count] = *client;
-        if (pthread_create(&threads[client_count], NULL, handle_client, client) != 0) {
+        client_count++;
+        pthread_mutex_unlock(&clients_mutex);
+
+        if (pthread_create(&threads[i], NULL, handle_client, client) != 0) {
             perror("Thread creation failed");
             close(client_sock);
             free(client);
             continue;
         }
-        client_count++;
     }
 
     if (test_mode) {

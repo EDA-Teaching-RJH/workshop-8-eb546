@@ -17,14 +17,6 @@
 #define BUFFER_SIZE 1024
 #define LOG_MSG_SIZE 2048
 
-typedef struct {
-    char source[20];
-    char type[20];
-    char data[256];
-    double threat_level;
-    char location[50];
-} Intel;
-
 void init_log_file(void) {
     FILE *fp = fopen(LOG_FILE, "w");
     if (fp) {
@@ -53,18 +45,6 @@ void log_event(const char *event_type, const char *details) {
     fclose(fp);
 }
 
-void caesar_encrypt(const char *plaintext, char *ciphertext, size_t len) {
-    memset(ciphertext, 0, len);
-    for (size_t i = 0; i < strlen(plaintext) && i < len - 1; i++) {
-        if (isalpha((unsigned char)plaintext[i])) {
-            char base = isupper((unsigned char)plaintext[i]) ? 'A' : 'a';
-            ciphertext[i] = (char)((plaintext[i] - base + CAESAR_SHIFT) % 26 + base);
-        } else {
-            ciphertext[i] = plaintext[i];
-        }
-    }
-}
-
 void caesar_decrypt(const char *ciphertext, char *plaintext, size_t len) {
     memset(plaintext, 0, len);
     for (size_t i = 0; i < strlen(ciphertext) && i < len - 1; i++) {
@@ -75,55 +55,6 @@ void caesar_decrypt(const char *ciphertext, char *plaintext, size_t len) {
             plaintext[i] = ciphertext[i];
         }
     }
-}
-
-int parse_intel(const char *message, Intel *intel) {
-    char *copy = strdup(message);
-    if (!copy) {
-        char log_msg[256];
-        snprintf(log_msg, sizeof(log_msg), "Memory allocation failed: %s", strerror(errno));
-        log_event("ERROR", log_msg);
-        return 0;
-    }
-
-    memset(intel, 0, sizeof(Intel));
-    int valid = 1;
-    char *token = strtok(copy, "|");
-    while (token && valid) {
-        char *key = strtok(token, ":");
-        char *value = strtok(NULL, ":");
-        if (!key || !value) {
-            log_event("ERROR", "Invalid key-value pair in message");
-            valid = 0;
-            break;
-        }
-        if (strcmp(key, "source") == 0) {
-            strncpy(intel->source, value, sizeof(intel->source) - 1);
-        } else if (strcmp(key, "type") == 0) {
-            strncpy(intel->type, value, sizeof(intel->type) - 1);
-        } else if (strcmp(key, "data") == 0) {
-            strncpy(intel->data, value, sizeof(intel->data) - 1);
-        } else if (strcmp(key, "threat_level") == 0) {
-            char *endptr;
-            intel->threat_level = strtod(value, &endptr);
-            if (*endptr != '\0' || intel->threat_level < 0) {
-                log_event("ERROR", "Invalid threat_level format");
-                valid = 0;
-            }
-        } else if (strcmp(key, "location") == 0) {
-            strncpy(intel->location, value, sizeof(intel->location) - 1);
-        }
-        token = strtok(NULL, "|");
-    }
-    if (!valid || !intel->source[0] || !intel->type[0]) {
-        char log_msg[256];
-        snprintf(log_msg, sizeof(log_msg), "Incomplete data: source=%s, type=%s",
-                 intel->source, intel->type);
-        log_event("ERROR", log_msg);
-        valid = 0;
-    }
-    free(copy);
-    return valid;
 }
 
 int parse_command(const char *message, char *command, char *target) {
@@ -143,7 +74,6 @@ int parse_command(const char *message, char *command, char *target) {
         char *key = strtok(token, ":");
         char *value = strtok(NULL, ":");
         if (!key || !value) {
-            log_event("ERROR", "Invalid command format");
             valid = 0;
             break;
         }
@@ -157,55 +87,11 @@ int parse_command(const char *message, char *command, char *target) {
         token = strtok(NULL, "|");
     }
     if (!valid || !command[0]) {
-        char log_msg[256];
-        snprintf(log_msg, sizeof(log_msg), "Incomplete command data: command=%s", command);
-        log_event("ERROR", log_msg);
-        valid = 0;
+        free(copy);
+        return 0;
     }
     free(copy);
-    return valid;
-}
-
-void send_intel(int sock) {
-    const char *const threat_data[] = {"Enemy Submarine", "Torpedo Launch", "Naval Fleet"};
-    const char *const locations[] = {"Norwegian Sea", "Celtic Sea", "Irish Sea"};
-    char message[512];
-    char ciphertext[BUFFER_SIZE];
-    char log_msg[LOG_MSG_SIZE];
-    int idx = rand() % 3;
-    double threat_level = 0.1 + (rand() % 90) / 100.0;
-
-    snprintf(message, sizeof(message),
-             "source:Submarine|type:Sea|data:%s|threat_level:%.2f|location:%s",
-             threat_data[idx], threat_level, locations[idx]);
-    caesar_encrypt(message, ciphertext, sizeof(ciphertext));
-
-    snprintf(log_msg, sizeof(log_msg),
-             "Sending Intelligence: Type=Sea, Details=%s, ThreatLevel=%.2f, Location=%s, [Encrypted] %.1000s",
-             threat_data[idx], threat_level, locations[idx], ciphertext);
-    log_event("INTEL", log_msg);
-
-    if (send(sock, ciphertext, strlen(ciphertext), 0) < 0) {
-        char log_msg[256];
-        snprintf(log_msg, sizeof(log_msg), "Failed to send intelligence: %s", strerror(errno));
-        log_event("ERROR", log_msg);
-    }
-}
-
-void process_threat(const Intel *intel) {
-    char log_msg[LOG_MSG_SIZE];
-    snprintf(log_msg, sizeof(log_msg),
-             "Received Threat: Source=%s, Type=%s, Details=%s, ThreatLevel=%.2f, Location=%s",
-             intel->source, intel->type, intel->data, intel->threat_level, intel->location);
-    log_event("THREAT", log_msg);
-
-    if (intel->threat_level > 0.7) {
-        snprintf(log_msg, sizeof(log_msg), "Launching missile against threat at %s", intel->location);
-        log_event("COMMAND", log_msg);
-    } else {
-        snprintf(log_msg, sizeof(log_msg), "Threat level %.2f below threshold (0.7); no launch", intel->threat_level);
-        log_event("THREAT", log_msg);
-    }
+    return 1;
 }
 
 int main(void) {
@@ -246,13 +132,10 @@ int main(void) {
     char plaintext[BUFFER_SIZE];
     char command[20];
     char target[50];
-    Intel intel;
     char log_msg[LOG_MSG_SIZE];
     time_t start_time = time(NULL);
 
     while (time(NULL) - start_time < SIMULATION_DURATION) {
-        send_intel(sock);
-
         ssize_t bytes = recv(sock, buffer, sizeof(buffer) - 1, 0);
         if (bytes <= 0) {
             snprintf(log_msg, sizeof(log_msg), "Disconnected: %s",
@@ -269,14 +152,12 @@ int main(void) {
 
         if (parse_command(plaintext, command, target)) {
             if (strcmp(command, "launch") == 0) {
-                snprintf(log_msg, sizeof(log_msg), "Command: Launch, Target=%s", target);
+                snprintf(log_msg, sizeof(log_msg), "Launching missile at %s", target);
                 log_event("COMMAND", log_msg);
             } else {
                 snprintf(log_msg, sizeof(log_msg), "Unknown command: %s", command);
                 log_event("ERROR", log_msg);
             }
-        } else if (parse_intel(plaintext, &intel)) {
-            process_threat(&intel);
         } else {
             snprintf(log_msg, sizeof(log_msg), "Invalid message format: %.1000s", plaintext);
             log_event("ERROR", log_msg);
