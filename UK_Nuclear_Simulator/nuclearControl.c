@@ -99,15 +99,24 @@ int parse_intel(const char *message, Intel *intel) {
 
     memset(intel, 0, sizeof(Intel));
     int valid = 1;
-    char *token = strtok(copy, "|");
+    char *saveptr = NULL;
+    char *token = strtok_r(copy, "|", &saveptr);
     while (token && valid) {
-        char *key = strtok(token, ":");
-        char *value = strtok(NULL, ":");
+        char *key = strtok_r(token, ":", &saveptr);
+        char *value = strtok_r(NULL, ":", &saveptr);
         if (!key || !value) {
-            log_event("ERROR", "Invalid key-value pair in message");
+            char log_msg[256];
+            snprintf(log_msg, sizeof(log_msg), "Invalid key-value pair: %s", token);
+            log_event("WARNING", log_msg);
             valid = 0;
             break;
         }
+
+        // Trim whitespace from value
+        while (isspace((unsigned char)*value)) value++;
+        size_t len = strlen(value);
+        while (len > 0 && isspace((unsigned char)value[len - 1])) value[--len] = '\0';
+
         if (strcmp(key, "source") == 0) {
             strncpy(intel->source, value, sizeof(intel->source) - 1);
         } else if (strcmp(key, "type") == 0) {
@@ -118,21 +127,30 @@ int parse_intel(const char *message, Intel *intel) {
             char *endptr;
             intel->threat_level = strtod(value, &endptr);
             if (*endptr != '\0' || intel->threat_level < 0) {
-                log_event("ERROR", "Invalid threat_level format");
-                valid = 0;
+                char log_msg[256];
+                snprintf(log_msg, sizeof(log_msg), "Invalid threat_level: %s", value);
+                log_event("WARNING", log_msg);
+                intel->threat_level = 0.0; // Default to 0
             }
         } else if (strcmp(key, "location") == 0) {
             strncpy(intel->location, value, sizeof(intel->location) - 1);
+        } else {
+            char log_msg[256];
+            snprintf(log_msg, sizeof(log_msg), "Unknown key: %s", key);
+            log_event("WARNING", log_msg);
         }
-        token = strtok(NULL, "|");
+        token = strtok_r(NULL, "|", &saveptr);
     }
-    if (!valid || !intel->source[0] || !intel->type[0]) {
+
+    // Validate required fields
+    if (!intel->source[0] || !intel->type[0]) {
         char log_msg[256];
-        snprintf(log_msg, sizeof(log_msg), "Incomplete data: source=%s, type=%s",
+        snprintf(log_msg, sizeof(log_msg), "Missing required fields: source=%s, type=%s",
                  intel->source, intel->type);
         log_event("ERROR", log_msg);
         valid = 0;
     }
+
     free(copy);
     return valid;
 }
